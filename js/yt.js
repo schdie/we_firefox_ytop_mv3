@@ -51,11 +51,17 @@ async function getStoredValues() {
 
 getStoredValues();
 
-function createButtonsDiv(){
+function createButtonsDiv() {
+	let element = document.getElementsByClassName('ytp-right-controls')[0];
+	while (element === null) {
+    console.log('Waiting for element');
+    element = document.getElementsByClassName('ytp-right-controls')[0];
+	}
+
 	// create the new elements to append right before ytp-right-controls
   let audiotdiv = document.createElement("div");
   let commentstdiv = document.createElement("div");
-  
+
   // check the initial state of audio only button and set it accordingly
   if (isAudioEnabledfromStorage === 1) {
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
@@ -69,12 +75,49 @@ function createButtonsDiv(){
 
   // Get the reference element, in this case the bottom right controls
   let ytpcontrolsdiv = document.getElementsByClassName('ytp-right-controls')[0];
+  console.log("ytpcontrolsdiv: " + ytpcontrolsdiv);
   // Get the parent element
   let parentDiv = ytpcontrolsdiv.parentNode;
 
   // insert the new elements to the left of the ytp-right-controls div
   parentDiv.insertBefore(audiotdiv, ytpcontrolsdiv);
   //parentDiv.insertBefore(commentstdiv, ytpcontrolsdiv);
+
+  // monitor the button for clicks
+	document.getElementById('audioonly').addEventListener("click", function (e) {
+		// enable audio only in storage
+		async function storEnableAudioOnly() {
+			const {audioonly} = await browser.storage.local.get('audioonly');
+			await browser.storage.local.set({audioonly: 1});
+		}
+
+		// disable audio only in storage
+		async function storDisableAudioOnly() {
+			const {audioonly} = await browser.storage.local.get('audioonly');
+			await browser.storage.local.set({audioonly: 0});
+		}
+
+		// when the audio only button is clicked
+		if (this.getAttribute("aria-pressed") == "false") {
+			// save enabled audio only option in storage
+			storEnableAudioOnly();
+			// change the audio only button to enabled
+			this.setAttribute("aria-pressed", "true");
+			// enable the video stream blocking rule
+			addBlockMessage();
+			// set audio to play
+			setUrl(1, 0);
+		} else {
+			// save disabled audio only option in storage
+			storDisableAudioOnly();
+			// change the audio only button to disabled
+			this.setAttribute("aria-pressed", "false");
+			// remove the video stream blocking rule
+			removeBlockMessage();
+			// set video+audio to play
+			setUrl(0, 1);
+		}
+	});
 }
 
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now)
@@ -87,7 +130,8 @@ const observeUrlChange = () => {
 			oldHref = document.location.href;
       // on changes
       console.log("URL changed, not main page: " + oldHref);
-      // if audio only is selected request accordingly      
+      // if audio only is selected request accordingly
+
       if (document.getElementById('audioonly') !== null) {
 				//	
 				console.log("is NOT null!!!");
@@ -97,14 +141,14 @@ const observeUrlChange = () => {
 				}
 			} else {
 				// create the buttons
-				createButtonsDiv();
+					createButtonsDiv();
 				// check status of button
 				if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 					// set audio only
 					setUrl(1, 0);
 				}
 			}
-			
+
     }
   });
   observer.observe(body, { childList: true, subtree: true });
@@ -118,42 +162,6 @@ document.addEventListener("DOMContentLoaded", function(){
 	if ((document.location.href.includes('https://m.youtube.com/watch')) || (document.location.href.includes('https://www.youtube.com/watch'))) {
 		createButtonsDiv();
 	}
-	
-	// monitor the button for clicks
-		document.getElementById('audioonly')?.addEventListener("click", function (e) {
-			// enable audio only in storage
-			async function storEnableAudioOnly() {
-				const {audioonly} = await browser.storage.local.get('audioonly');
-				await browser.storage.local.set({audioonly: 1});
-			}
-			
-			// disable audio only in storage
-			async function storDisableAudioOnly() {
-				const {audioonly} = await browser.storage.local.get('audioonly');
-				await browser.storage.local.set({audioonly: 0});
-			}
-			
-			// when the audio only button is clicked
-			if (this.getAttribute("aria-pressed") == "false") {
-				// save enabled audio only option in storage
-				storEnableAudioOnly();
-				// change the audio only button to enabled
-				this.setAttribute("aria-pressed", "true");
-				// enable the video stream blocking rule
-				addBlockMessage();
-				// set audio to play
-				setUrl(1, 0);
-			} else {
-				// save disabled audio only option in storage
-				storDisableAudioOnly();
-				// change the audio only button to disabled
-				this.setAttribute("aria-pressed", "false");
-				// remove the video stream blocking rule
-				removeBlockMessage();
-				// set video+audio to play
-				setUrl(0, 1);
-			}
-		});
 });
 
 
@@ -183,7 +191,6 @@ function setUrl(audio, video) {
 				var streams = [],
 				result = {};
 				
-
 				// 
 				if (data.streamingData) {
 					// raw_player_response.streamingData.adaptiveFormats
