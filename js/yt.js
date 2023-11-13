@@ -119,19 +119,36 @@ document.addEventListener("DOMContentLoaded", function(){
 		createButtonsDiv();
 	}
 	
-	// monitor the button on click
-		document.getElementById('audioonly').addEventListener("click", function (e) {		
+	// monitor the button for clicks
+		document.getElementById('audioonly').addEventListener("click", function (e) {
+			// enable audio only in storage
+			async function storEnableAudioOnly() {
+				const {audioonly} = await browser.storage.local.get('audioonly');
+				await browser.storage.local.set({audioonly: 1});
+			}
+			
+			// disable audio only in storage
+			async function storDisableAudioOnly() {
+				const {audioonly} = await browser.storage.local.get('audioonly');
+				await browser.storage.local.set({audioonly: 0});
+			}
+			
+			// when the audio only button is clicked
 			if (this.getAttribute("aria-pressed") == "false") {
-				// change the button to enabled
+				// save enabled audio only option in storage
+				storEnableAudioOnly();
+				// change the audio only button to enabled
 				this.setAttribute("aria-pressed", "true");
-				// enable video stream blocking rule
+				// enable the video stream blocking rule
 				addBlockMessage();
 				// set audio to play
 				setUrl(1, 0);
 			} else {
-				// change the button to disabled
+				// save disabled audio only option in storage
+				storDisableAudioOnly();
+				// change the audio only button to disabled
 				this.setAttribute("aria-pressed", "false");
-				// remove video stream blocking rule
+				// remove the video stream blocking rule
 				removeBlockMessage();
 				// set video+audio to play
 				setUrl(0, 1);
@@ -315,179 +332,3 @@ function setUrl(audio, video) {
 }
 
 // more taxing, needed when we don't get any URL from getUrl() using ytInitialPlayerResponse
-
-/*
-// thanks to https://stackoverflow.com/questions/8690255/how-to-play-only-the-audio-of-a-youtube-video-using-html-5/45375023#45375023 for the idea
-// less taxing, most likely to get a viable URL for playback
-function setUrl(audio, video) {
-	// audio streams
-	as = {},
-	// video streams
-	vs = {},
-
-	fetch(document.location.href).then(response => {
-		if (response.ok) {
-			response.text().then(data => {
-
-				var regex = /(?:ytplayer\.config\s*=\s*|ytInitialPlayerResponse\s?=\s?)(.+?)(?:;var|;\(function|\)?;\s*if|;\s*if|;\s*ytplayer\.|;\s*<\/script)/gmsu;
-
-				data = data.split('window.getPageData')[0];
-				data = data.replace('ytInitialPlayerResponse = null', '');
-				data = data.replace('ytInitialPlayerResponse=window.ytInitialPlayerResponse', '');
-				data = data.replace('ytplayer.config={args:{raw_player_response:ytInitialPlayerResponse}};', '');
-				//data = data.replace('ytplayer.config={args:{raw_player_response.streamingData.adaptiveFormats:ytInitialPlayerResponse}};', '');
-
-				var matches = regex.exec(data);
-				var data = matches && matches.length > 1 ? JSON.parse(matches[1]) : false;
-
-				var streams = [],
-				result = {};
-				
-
-				// 
-				if (data.streamingData) {
-					// raw_player_response.streamingData.adaptiveFormats
-					if (data.streamingData.adaptiveFormats) {
-						streams = streams.concat(data.streamingData.adaptiveFormats);
-					}
-					// raw_player_response.streamingData.formats
-					if (data.streamingData.formats) {
-						streams = streams.concat(data.streamingData.formats);
-					}
-				} else {
-					return false;
-				}
-				
-				//console.log(streams);
-
-				// audio only streams array
-				var audioStreams = streams.filter(function (el) {
-					//return el.mimeType == 'audio/webm; codecs="opus"';
-					return el.mimeType.startsWith('audio');
-				});
-				
-				console.log(audioStreams);
-				
-				// video+audio only streams array
-				var videoStreams = streams.filter(function (el) {
-					return el.mimeType.includes(',');
-				});
-
-				console.log(videoStreams);
-	
-				audioStreams.forEach((stream, n) => {
-					var itag = stream.itag * 1;
-					audioid = false;
-					switch (itag) {
-						// audio
-						case 258: // aac 384 Kbps 5.1
-							audioid = '258';
-							console.log("stream 251 found! " + stream.url);
-							break;
-						case 256: // aac 192 Kbps 5.1
-							audioid = '256';
-							console.log("stream 251 found! " + stream.url);
-							break;
-						case 251: // webm (vbr) up to 160 Kbps (currently popular)
-							audioid = '251';
-							console.log("stream 251 found! " + stream.url);
-							break;
-						case 250: // webm (vbr) ~70 Kbps (currently popular)
-							audioid = '250'; 
-							console.log("stream 250 found! " + stream.url);
-							break;
-						case 249: // webm (vbr) ~50 Kbps (currently popular)
-							audioid = '249';
-							console.log("stream 249 found! " + stream.url);
-							break;
-						case 141: // aac 256 Kbps
-							audioid = '141';
-							console.log("stream 141 found! " + stream.url);
-							break;
-						case 140: // aac 48 Kbps (currently popular)
-							audioid = '140';
-							console.log("stream 140 found! " + stream.url);
-							break;
-						case 139: // aac 48 Kbps
-							audioid = '139';
-							console.log("stream 139 found! " + stream.url);
-							break;
-						}
-						if (audioid) as[audioid] = stream.url;
-				});
-				
-				// sometimes yt returns 403 on the url, should check before...
-				
-				// some ids are throttled, change as needed
-				var audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'];
-				console.log("audioURL = " + audioURL);
-				
-				videoStreams.forEach((stream, n) => {
-					var itag = stream.itag * 1; // no idea why the multiplacation
-					videoid = false;
-					switch (itag) {
-						// video+audio
-						case 59: // mp4+aac 480p 
-							videoid = '59';
-							console.log("stream 59 found! " + stream.url);
-							break;
-						case 37: // mp4+aac 1080p 
-							videoid = '37';
-							console.log("stream 37 found! " + stream.url);
-							break;
-						case 22: // mp4+aac 720p
-							videoid = '22';
-							console.log("stream 22 found! " + stream.url);
-							break;
-						case 18: // mp4+aac 360p 
-							videoid = '18'; 
-							console.log("stream 18 found! " + stream.url);
-							break;
-						}
-						if (videoid) vs[videoid] = stream.url;
-				});
-				
-				var videoURL = vs['22'] || vs['18'] || vs['59'] || vs['37'];
-				console.log("videoURL = " + videoURL);
-				
-				// get player's current time
-				const videoElement = document.getElementsByTagName('video')[0];
-				// get current player time
-				var currentTime = document.getElementsByClassName("ytp-time-current")[0];
-				// convert time into seconds
-				var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-								
-				// play the audio only
-				if (arguments[0] === 1) {
-					if (audioURL) {
-						console.log("Available audio stream found.");
-						if (videoElement.src != audioURL) {
-							videoElement.src = audioURL;
-							videoElement.currentTime = currentTimeSeconds;
-							videoElement.play();
-							console.log("player source is audio only.");
-						}
-					} else {
-						console.log("No available audio stream using getUrl() for: " + document.location.href);
-					}
-				}
-				
-				// play video+audio
-				if (arguments[1] === 1) {
-					if (videoURL) {
-						console.log("Available video+audio stream found.");
-						if (videoElement.src != videoURL) {
-							videoElement.src = videoURL;
-							videoElement.currentTime = currentTimeSeconds;
-							videoElement.play();
-							console.log("player source is video+audio.");
-						}
-					} else {
-						console.log("No available video+audio stream using getUrl() for: " + document.location.href);
-					}
-				}
-			})
-		}
-	});
-}
-*/

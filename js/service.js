@@ -32,14 +32,14 @@ function blockvideostream() {
 					},
 					condition: {
 						resourceTypes: ["xmlhttprequest"],
-						urlFilter: "googlevideo.com/*mime=video*", // block URLs that starts with this
-						initiatorDomains: ["youtube.com"], // on this domain
+						urlFilter: "googlevideo.com/*mime=video*",
+						initiatorDomains: ["youtube.com"],
 					},
 					id: adblockRuleID,
 					priority: 1,
 				},
 			],
-			removeRuleIds: [adblockRuleID], // this removes old rule if any
+			removeRuleIds: [adblockRuleID],
 		},
 		() => {
 			console.log("block rule added");
@@ -54,7 +54,7 @@ function unblockvidestream() {
 			removeRuleIds: [adblockRuleID], // this removes old rule if any
 		},
 		() => {
-			console.log("removed block rule");
+			console.log("block rule removed");
 		}
 	);
 }
