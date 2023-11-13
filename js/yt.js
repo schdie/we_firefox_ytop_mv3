@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	}
 	
 	// monitor the button for clicks
-		document.getElementById('audioonly').addEventListener("click", function (e) {
+		document.getElementById('audioonly')?.addEventListener("click", function (e) {
 			// enable audio only in storage
 			async function storEnableAudioOnly() {
 				const {audioonly} = await browser.storage.local.get('audioonly');
