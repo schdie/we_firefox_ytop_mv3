@@ -1,0 +1,46 @@
+{
+  "description": "Audio mode only for youtube.com",
+  "manifest_version": 3,
+  "name": "Tube Audio Options+",
+  "version": "1",
+  
+  "icons": {
+    "48": "icons/48.png",
+    "96": "icons/96.png",
+    "128": "icons/128.png"
+  },
+
+  "permissions": [
+    "storage", "declarativeNetRequest"
+  ],
+  
+  "host_permissions": [
+	"*://*.youtube.com/*"
+	],
+  
+	"web_accessible_resources": [
+    {
+      "resources": [ "js/yt.js" ],
+      "matches": [ "*://*.youtube.com/*" ]
+    }
+  ],
+
+  "background": {
+		"scripts": ["js/service.js"]
+  },
+
+  "content_scripts": [
+  {
+    "matches": ["*://*.youtube.com/*"],
+    "js": ["js/yt.js"],
+    "run_at": "document_start"
+    }
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "109.0"
+    }
+  }
+  
+}
