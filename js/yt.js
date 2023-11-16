@@ -6,6 +6,7 @@
 // TO-DO:
 // throttle is an issue, especially on resume and more the time has elapsed from zero
 // try to get the audio urls even when not exposed by ytInitialPlayerResponse
+// monitor the settings > quality > button and disable audio only, also may use this for video+audio when disabling audio only toggle
 
 // request service.js to remove the video stream block
 function removeBlockMessage(e) {
@@ -21,9 +22,10 @@ function addBlockMessage(e) {
   });
 }
 
+// global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
 
-// get stored values and set blocking rules 
+// get stored values and set blocking rule(s) if needed 
 async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
 	const {commentsout} = await browser.storage.local.get('commentsout');
@@ -49,21 +51,34 @@ async function getStoredValues() {
 	*/
 }
 
+// this should be the first thing to execute
 getStoredValues();
 
+// this should be the second
+document.addEventListener("DOMContentLoaded", function(){
+	// if it's a video page
+	if (document.location.href.includes('.youtube.com/watch?v=')) {
+		// create our div(s)
+		createButtonsDiv();
+		console.log("create div from domcontentloaded.");
+	}
+});
+
+// function to create our div(s)
 async function createButtonsDiv() {
-	// ytp-right-controls needs to be loaded before we can attach our div to it
+	// ytp-right-controls needs to be loaded before we can attach our div(s) to it
 	while(!document.getElementsByClassName('ytp-right-controls')[0]) {
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
+	// once ytp-right-controls is found
 	let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
 
-	// create the new elements to append right before ytp-right-controls
+	// we create the new div(s) to append right before ytp-right-controls
   let audiotdiv = document.createElement("div");
   let commentstdiv = document.createElement("div");
 
-  // check the initial state of audio only button and set it accordingly
+  // and check for the initial state our div(s) should have
   if (isAudioEnabledfromStorage === 1) {
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 		// set audio url on startup when enabled
@@ -84,7 +99,9 @@ async function createButtonsDiv() {
   // insert the new elements to the left of the ytp-right-controls div
   parentDiv.insertBefore(audiotdiv, ytpRightControlsElement);
   //parentDiv.insertBefore(commentstdiv, ytpcontrolsdiv);
-
+  
+  // add the event listener for clicks on the created div
+	monitorForClicks();
 }
 
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now)
@@ -98,81 +115,69 @@ const observeUrlChange = () => {
       // on changes
       console.log("URL changed, not main page: " + oldHref);
       
-      // if audio only is selected request accordingly
+      // if the audioonly element is loaded
       if (document.getElementById('audioonly') !== null) {
-				//	
 				console.log("is NOT null!!!");
+				// if audio audioonly is enabled
 				if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
-					// set audio only
+					// set playback to audio only
 					setUrl(1, 0);
 				}
 			} else {
-				// create the buttons
+				// create the div with the audioonly element
 				console.log("create div from url change.");
 				createButtonsDiv();
-				// add the event listener for clicks on the created div
-				monitorForClicks();
-				console.log("event listener for clicks from url change.");
-				// check status of button
+				// if audio audioonly is enabled
 				if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
-					// set audio only
+					// set playback to audio only
 					setUrl(1, 0);
 				}
 			}
-
-    }
+    } else if (document.location.href == 'https://www.youtube.com/') {
+		console.log("url changed, main page!");
+		// maybe check here for the mini player
+		}
   });
   observer.observe(body, { childList: true, subtree: true });
 };
 
 window.onload = observeUrlChange;
 
-// after most of the content has been loaded...
-document.addEventListener("DOMContentLoaded", function(){
-	// and we are on a video page
-	if (document.location.href.includes('.youtube.com/watch?v=')) {
-		// create our div
-		createButtonsDiv();
-		console.log("create div from domcontentloaded.");
-		// monitor our div for clicks
-		monitorForClicks();
-		console.log("event listener for clicks from domcontentloaded.");
-	}
-});
+
 
 // adds an event listener to monitor our element(s) for clicks
 function monitorForClicks() {
 	document.getElementById('audioonly').addEventListener("click", function (e) {
-		// enable audio only in storage
+		// enables audio only in storage
 		async function storEnableAudioOnly() {
 			const {audioonly} = await browser.storage.local.get('audioonly');
 			await browser.storage.local.set({audioonly: 1});
 		}
 
-		// disable audio only in storage
+		// disables audio only in storage
 		async function storDisableAudioOnly() {
 			const {audioonly} = await browser.storage.local.get('audioonly');
 			await browser.storage.local.set({audioonly: 0});
 		}
 
-		// when the audio only button is clicked
+		// when the audioonly element is clicked...
 		if (this.getAttribute("aria-pressed") == "false") {
-			// save enabled audio only option in storage
+			// ...and set to enable, we save to storage
 			storEnableAudioOnly();
-			// change the audio only button to enabled
+			// change the audioonly element to enabled
 			this.setAttribute("aria-pressed", "true");
-			// enable the video stream blocking rule
+			// set the video blocking rule
 			addBlockMessage();
-			// set audio to play
+			// and call for audio only playback
 			setUrl(1, 0);
 		} else {
-			// save disabled audio only option in storage
+			// ...and set to disabled, we save to storage
 			storDisableAudioOnly();
-			// change the audio only button to disabled
+			// change the audioonly element to disabled
 			this.setAttribute("aria-pressed", "false");
-			// remove the video stream blocking rule
+			// remove the video blocking rule
 			removeBlockMessage();
-			// set video+audio to play
+			// and call for vide+audio playback
 			setUrl(0, 1);
 		}
 	});
