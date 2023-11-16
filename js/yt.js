@@ -104,7 +104,7 @@ async function createButtonsDiv() {
 	monitorForClicks();
 }
 
-// looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now)
+// looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
 // for chrome navigation.addEventListener seems a better solution
 const observeUrlChange = () => {
   let oldHref = document.location.href;
@@ -142,8 +142,6 @@ const observeUrlChange = () => {
 };
 
 window.onload = observeUrlChange;
-
-
 
 // adds an event listener to monitor our element(s) for clicks
 function monitorForClicks() {
