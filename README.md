@@ -7,7 +7,7 @@
 	- Switch between video and audio seamlessly.
 	- Download links for audio streams (if available) placed under the video description.
 - Disable/enable comments from loading.
-
+---
 - Limitations:
 	- Doesn't work on live streams.
 	- Some videos don't expose or have audio only streams.
