@@ -2,7 +2,7 @@
   "description": "Audio mode only for youtube.com",
   "manifest_version": 3,
   "name": "Tube Audio Options+",
-  "version": "1",
+  "version": "2",
   
   "icons": {
     "48": "icons/48.png",
