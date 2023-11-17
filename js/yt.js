@@ -75,6 +75,12 @@ async function createButtonsDiv() {
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
+	// if we already exist there's no need for more of us
+	if (document.getElementById('audioonly')) {
+		console.log("audioonly already exists, bailing.");
+		return;
+	}
+	
 	// once ytp-right-controls is found
 	let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
 
@@ -87,6 +93,7 @@ async function createButtonsDiv() {
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 		// set audio url on startup when enabled
 		setUrl(1, 0);
+		console.log("atempt to play audio only from createButtonsDiv!");
 	} else {
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 	}
@@ -211,7 +218,7 @@ async function monitorForClicks() {
 	//document.getElementById('ytp-id-18').addEventListener("click", function (e) {
 		document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
 		
-		//if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
+		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 		// this is a hack, but when clicking on any child element in ytp-id-18...
 		var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
 		console.log("elText outside: " + elT);
@@ -234,7 +241,7 @@ async function monitorForClicks() {
 			// especial case when selecting "Auto"
 			//console.log("some bullshit");
 		//}
-		//}
+		}
 	});
 }
 
