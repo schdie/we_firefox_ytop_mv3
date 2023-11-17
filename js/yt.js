@@ -25,6 +25,9 @@ function addBlockMessage(e) {
 // global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
 
+// global scope, used to store original audio+video source
+var originalSource;
+
 // get stored values and set blocking rule(s) if needed 
 async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
@@ -102,6 +105,11 @@ async function createButtonsDiv() {
   
   // add the event listener for clicks on the created div
 	monitorForClicks();
+	
+	// get the original playback source and set the global var
+	const videoElement = document.getElementsByTagName('video')[0];
+	//original video source
+	var originalSource = videoElement.src;
 }
 
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
@@ -177,6 +185,37 @@ function monitorForClicks() {
 			removeBlockMessage();
 			// and call for vide+audio playback
 			setUrl(0, 1);
+		}
+	});
+	
+	// only add the eventlistener if audioonly.getAttribute("aria-pressed") == "true")
+	// if () {
+	// we are also hijacking this function to monitor for clicks on the youtube settings > quality element at the same time
+	document.getElementById('ytp-id-18').addEventListener("click", function (e) {
+		
+		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
+		// this is a hack, but when clicking on any child element in ytp-id-18...
+		var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
+		console.log("elText outside: " + elT);
+		// ...that contains any of the following text values (doesn't work with "Auto")
+		if (elT.includes("2160p") || elT.includes("1440p") || elT.includes("1080p") || elT.includes("720p") || elT.includes("480p") || elT.includes("360p") || elT.includes("240p") || elT.includes("144p")) {
+			console.log("elText inside: " + elT);
+			// we disable the video blocking rule
+			removeBlockMessage();
+			// and set the audioonly div button to disabled
+			document.getElementById('audioonly').setAttribute("aria-pressed", "false");
+			// set audioonly storage to false
+			
+			// set video source and play
+			setUrl(0, 1);
+			// remove event listener
+			//document.getElementById('ytp-id-18').removeEventListener("click", e);
+			//this.removeEventListener('click', arguments.callee, false);
+			
+		} //else if {
+			// especial case when selecting "Auto"
+			//console.log("some bullshit");
+		//}
 		}
 	});
 }
@@ -282,11 +321,14 @@ function setUrl(audio, video) {
 						if (audioid) as[audioid] = stream.url;
 				});
 				
-				// sometimes yt returns 403 on the url, should check before...
-				
 				// some ids are throttled, change as needed
 				var audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'];
 				console.log("audioURL = " + audioURL);
+				
+				// sometimes the audioURL returns 403
+				// if blah blah
+				// setUrl(0, 1);
+				// return;
 				
 				videoStreams.forEach((stream, n) => {
 					var itag = stream.itag * 1; // no idea why the multiplacation
@@ -322,12 +364,18 @@ function setUrl(audio, video) {
 				var currentTime = document.getElementsByClassName("ytp-time-current")[0];
 				// convert time into seconds
 				var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-								
+				// original video source
+				if (videoElement.src.indexOf("blob:") >= 0) {
+					console.log("originalSource before: " + originalSource);
+					originalSource = videoElement.src;
+					console.log("originalSource after: " + originalSource);
+				}
 				// play the audio only
 				if (arguments[0] === 1) {
 					if (audioURL) {
 						console.log("Available audio stream found.");
 						if (videoElement.src != audioURL) {
+							console.log("original video source in audio playback: " + originalSource);
 							videoElement.src = audioURL;
 							videoElement.currentTime = currentTimeSeconds;
 							videoElement.play();
@@ -340,10 +388,19 @@ function setUrl(audio, video) {
 				
 				// play video+audio
 				if (arguments[1] === 1) {
+					videoElement.src = originalSource;
+					console.log("original video source in video playback: " + originalSource);
+					videoElement.currentTime = currentTimeSeconds;
+					videoElement.play();
+					/*
 					if (videoURL) {
 						console.log("Available video+audio stream found.");
 						if (videoElement.src != videoURL) {
-							videoElement.src = videoURL;
+							//videoElement.src = videoURL;
+							console.log("original video source in video playback: " + originalSource);
+							videoElement.src = originalSource;
+							//videoElement.src = ""; 
+							console.log("using original source for video: " + originalSource);
 							videoElement.currentTime = currentTimeSeconds;
 							videoElement.play();
 							console.log("player source is video+audio.");
@@ -351,6 +408,7 @@ function setUrl(audio, video) {
 					} else {
 						console.log("No available video+audio stream using getUrl() for: " + document.location.href);
 					}
+					*/
 				}
 			})
 		}
