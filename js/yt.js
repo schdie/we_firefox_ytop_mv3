@@ -70,7 +70,8 @@ document.addEventListener("DOMContentLoaded", function(){
 // function to create our div(s)
 async function createButtonsDiv() {
 	// ytp-right-controls needs to be loaded before we can attach our div(s) to it
-	while(!document.getElementsByClassName('ytp-right-controls')[0]) {
+	// there's more than one ytp-right-controls, once 'movie_player' has loaded we can get the first one
+	while(!document.getElementById('movie_player')) {
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
@@ -89,7 +90,7 @@ async function createButtonsDiv() {
 	} else {
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 	}
-
+	
 	//commentstdiv.innerHTML = '<button id="commentsout" class="ytp-commentsout-button ytp-button" data-priority="3" data-title-no-tooltip="Disable comments Toggle" aria-pressed="false" aria-label="Disable comments Toggle" title="Disable comments Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-9 -10 39 39" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-co17"></use><path d="M7 18a1 1 0 0 1-1-1v-3H3.75A1.752 1.752 0 0 1 2 12.25v-8.5A1.752 1.752 0 0 1 3.75 2h12.5A1.752 1.752 0 0 1 18 3.75v8.5a1.762 1.762 0 0 1-.514 1.238A1.736 1.736 0 0 1 16.25 14h-4.836l-3.707 3.707A1 1 0 0 1 7 18zm-3-6h3a1 1 0 0 1 1 1v1.586l2.293-2.293A1 1 0 0 1 11 12h5V4H4v8z" fill="#fff"></path></svg></button>';
 
   // Get the reference element, in this case the bottom right controls
@@ -108,7 +109,6 @@ async function createButtonsDiv() {
 	
 	// get the original playback source and set the global var
 	const videoElement = document.getElementsByTagName('video')[0];
-	//original video source
 	var originalSource = videoElement.src;
 }
 
@@ -123,9 +123,19 @@ const observeUrlChange = () => {
       // on changes
       console.log("URL changed, not main page: " + oldHref);
       
+      createButtonsDiv();
+      console.log("create div from url changed atempt!");
+
+      // if the audioonly element is loaded
+      //if (document.getElementById('audioonly') == null) {
+			//	console.log("URL changed, audioonly elemnt is null! so we try to create it");
+			//	createButtonsDiv();
+			//}
+      
+      /*
       // if the audioonly element is loaded
       if (document.getElementById('audioonly') !== null) {
-				console.log("is NOT null!!!");
+				console.log("URL changed, audioonly is not null!");
 				// if audio audioonly is enabled
 				if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 					// set playback to audio only
@@ -141,6 +151,8 @@ const observeUrlChange = () => {
 					setUrl(1, 0);
 				}
 			}
+			*/
+			
     } else if (document.location.href == 'https://www.youtube.com/') {
 		console.log("url changed, main page!");
 		// maybe check here for the mini player
@@ -152,7 +164,7 @@ const observeUrlChange = () => {
 window.onload = observeUrlChange;
 
 // adds an event listener to monitor our element(s) for clicks
-function monitorForClicks() {
+async function monitorForClicks() {
 	document.getElementById('audioonly').addEventListener("click", function (e) {
 		// enables audio only in storage
 		async function storEnableAudioOnly() {
@@ -191,9 +203,15 @@ function monitorForClicks() {
 	// only add the eventlistener if audioonly.getAttribute("aria-pressed") == "true")
 	// if () {
 	// we are also hijacking this function to monitor for clicks on the youtube settings > quality element at the same time
-	document.getElementById('ytp-id-18').addEventListener("click", function (e) {
+	// ytp-id-XX is random, use 'ytp-popup ytp-settings-menu' class
+	while(!document.getElementById('movie_player')) {
+		await new Promise(r => requestAnimationFrame(r));
+	}
+	
+	//document.getElementById('ytp-id-18').addEventListener("click", function (e) {
+		document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
 		
-		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
+		//if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 		// this is a hack, but when clicking on any child element in ytp-id-18...
 		var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
 		console.log("elText outside: " + elT);
@@ -216,7 +234,7 @@ function monitorForClicks() {
 			// especial case when selecting "Auto"
 			//console.log("some bullshit");
 		//}
-		}
+		//}
 	});
 }
 
@@ -326,7 +344,7 @@ function setUrl(audio, video) {
 				console.log("audioURL = " + audioURL);
 				
 				// sometimes the audioURL returns 403
-				// if blah blah
+				// if true restart the function until it doesn't
 				// setUrl(0, 1);
 				// return;
 				
