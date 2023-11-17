@@ -75,8 +75,13 @@ async function createButtonsDiv() {
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
-	// if we already exist there's no need for more of us
+	// if we already exist there's no need for more of us ***** maybe the if only for the creation of the div and not the rest
 	if (document.getElementById('audioonly')) {
+		// but before we check if audioonly is enabled and request the audio playback
+		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
+			// set playback to audio only
+			setUrl(1, 0);
+		}
 		console.log("audioonly already exists, bailing.");
 		return;
 	}
