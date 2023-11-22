@@ -1,15 +1,14 @@
-// on the first installation the options are set to false
+'use strict';
+
+const targetTabId = new Set();
+//var enable;
+
+// on installation the audio only option is set to false
 async function setDefaultValues() {
-	
 	const {audioonly} = await browser.storage.local.get('audioonly');
-	const {commentsout} = await browser.storage.local.get('commentsout');
 	
 	if (!audioonly) {
 		await browser.storage.local.set({audioonly: 0});
-	}
-	
-	if (!audioonly) {
-		await browser.storage.local.set({commentsout: 0});
 	}
 }
 
@@ -18,57 +17,96 @@ browser.runtime.onInstalled.addListener(() => {
 	setDefaultValues();
 });
 
-// id to identify the rule, must be > 1
-const adblockRuleID = 2;
+var stoppls = 0;
+var currentURL;
+var oldURL;
 
-// block the video streams
-function blockvideostream() {
-	browser.declarativeNetRequest.updateDynamicRules(
-		{
-			addRules: [
-				{
-					action: {
-						type: "block",
-					},
-					condition: {
-						resourceTypes: ["xmlhttprequest"],
-						urlFilter: "googlevideo.com/*mime=video*",
-						initiatorDomains: ["youtube.com"],
-					},
-					id: adblockRuleID,
-					priority: 1,
-				},
-			],
-			removeRuleIds: [adblockRuleID],
-		},
-		() => {
-			console.log("block rule added");
+// Get the current url
+browser.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+		currentURL = request.currloc;
+		//console.log("currentURL: " + request.currloc);
+	}
+);
+
+// always listening for urls, the content script decides whenever should play audio only or not
+checkAudioUrls();
+
+/*
+function checkAudioUrls() {
+	chrome.webRequest.onBeforeRequest.addListener(
+		processRequest,
+		{ urls: ["<all_urls>"],
+		  types: ["xmlhttprequest"]
 		}
 	);
 }
+*/
 
-// unblock the video streams
-function unblockvidestream() {
-	browser.declarativeNetRequest.updateDynamicRules(
+function checkAudioUrls() {
+	chrome.webRequest.onBeforeRequest.addListener(
+		processRequest,
 		{
-			removeRuleIds: [adblockRuleID], // this removes old rule if any
-		},
-		() => {
-			console.log("block rule removed");
-		}
-	);
+			urls: ["<all_urls>"],
+			types: ["xmlhttprequest"]
+	});
 }
 
-// handling received requests by yt.js
-function handleMessage(request, sender) {
-  console.log(`A content script sent a message: ${request.greeting}`);
-  if (request.greeting == "removeblock") {
-		console.log("block removed");
-		unblockvidestream();
-	} else if (request.greeting == "addblock") {
-		console.log("block added");
-		blockvideostream();
+// original code from https://github.com/craftwar/youtube-audio
+function processRequest(details) {
+	// youtube.com/embed/ is usally for ads, you don't want to even hear the ad right?
+	if (details.originUrl.includes("https://www.youtube.com/embed/") || details.originUrl.includes(" https://accounts.youtube.com/RotateCookiesPage")) {
+		console.log("bailing! details.originUrl.includes: " + details.originUrl);
+		return;
+	}
+	
+	if (currentURL) {
+		if (currentURL.includes("accounts.youtube.com/RotateCookiesPage")) {
+		console.log("bailing! currentURL: " + currentURL);
+		return;
+		}
+	}
+	// here we are forcing itag 251, with a little more code we could choose from 139/140/141/171/172/249/250/251/256/258
+	// 251 is probably the safest bet and has the best quality
+	if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {
+		// reverse parameter order (same as url parameter traversal order)
+		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];
+		const audioURL = removeURLParameters(details.url, parametersToBeRemoved);
+		chrome.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
+		//console.log("audio URL ORIGIN: " + details.originUrl);
+		//console.log("audio URL: " + audioURL);
+		stoppls = stoppls + 1;
+		console.log("stoppls counter: " + stoppls);
+		console.log("currentURL: " + currentURL);
+		console.log("currentURL audio only url: " + audioURL);
+		console.log("-------------------------");
+		//console.log("currentURL: " + currentURL);
+		oldURL = currentURL;
 	}
 }
 
-browser.runtime.onMessage.addListener(handleMessage);
+function removeURLParameters(url, parametersToBeRemoved) {
+	console.log("removeURLParameters executed: " + url);
+	const urlparts = url.split('?');
+	if (urlparts.length >= 2) {
+		let pars = urlparts[1].split('&');
+
+		// assume each parameter exists once only
+		for (const parameter of parametersToBeRemoved) {
+			for (var i = pars.length - 1; ~i; --i) {
+				if (pars[i].startsWith(parameter)) {
+					pars.splice(i, 1);
+					break;
+				}
+			}
+		}
+		url = `${urlparts[0]}?${pars.join('&')}`;
+	}
+	return url;
+}
+
+/*
+function disableExtension() {
+	chrome.webRequest.onBeforeRequest.removeListener(processRequest);
+}
+*/
