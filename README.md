@@ -9,8 +9,7 @@
 
 - Limitations:
 	- Doesn't work on live streams.
-	- Using the miniplayer may have unexpected results.
-	- Sometimes YT gives an unsuitable audio-only source, refreshing the page should solve it.  
+	- Using the miniplayer may have unexpected results.  
 
 ---
 

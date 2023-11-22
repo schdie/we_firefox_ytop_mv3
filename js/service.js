@@ -70,8 +70,14 @@ function processRequest(details) {
 	// 251 is probably the safest bet and has the best quality
 	if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {
 		// reverse parameter order (same as url parameter traversal order)
-		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];
+		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];		
 		const audioURL = removeURLParameters(details.url, parametersToBeRemoved);
+		
+		// check if url has &redirect_counter
+		const newString = audioURL.split("&redirect_counter").pop();
+		console.log("ogString: " + audioURL);
+		console.log("newString: " + newString);
+		
 		chrome.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
 		//console.log("audio URL ORIGIN: " + details.originUrl);
 		//console.log("audio URL: " + audioURL);

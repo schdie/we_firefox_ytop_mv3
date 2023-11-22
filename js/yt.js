@@ -274,7 +274,7 @@ chrome.runtime.onMessage.addListener(
 					// Automatic playback started!
 					}).catch(function(error) {
 						// we are just going to brute force or way because youtube doesn't play nice sometimes
-						console.log("play promise error" + error);
+						console.log("play promise error: " + error);
 						//console.log("play promise error" + videoElement.src);
 						videoElement.src = url;
 						setCurrentTime();
