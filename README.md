@@ -12,7 +12,7 @@
 	- Using the miniplayer may have unexpected results.
 	- Sometimes YT gives an unsuitable audio-only source, refreshing the page should solve it.  
 
-Used some code from from [here](https://github.com/craftwar/youtube-audio).  
+Used the main logic code from from [here](https://github.com/craftwar/youtube-audio).  
 
 The extension is heavily commented and was created for educational purposes only.  
 
