@@ -6,11 +6,13 @@
 - Audio only playback:
 	- Completely disables video rendering when the audio only toggle is enabled.
 	- Switch between video and audio seamlessly.
----
+
 - Limitations:
 	- Doesn't work on live streams.
 	- Using the miniplayer may have unexpected results.
 	- Sometimes YT gives an unsuitable audio-only source, refreshing the page should solve it.  
+
+---
 
 Used the main logic code from from [here](https://github.com/craftwar/youtube-audio).  
 
