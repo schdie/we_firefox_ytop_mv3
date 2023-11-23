@@ -13,7 +13,7 @@
 
 ---
 
-Used the main logic code from from [here](https://github.com/craftwar/youtube-audio).  
+Used the main logic code from [here](https://github.com/craftwar/youtube-audio).  
 
 The extension is heavily commented and was created for educational purposes only.  
 
