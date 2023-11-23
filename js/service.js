@@ -51,9 +51,22 @@ function checkAudioUrls() {
 			types: ["xmlhttprequest"]
 	});
 }
+/*
+function checkAudioUrls() {
+	chrome.webRequest.onBeforeRequest.addListener(
+		processRequest,
+		{
+			urls: ["<all_urls>"],
+			types: ["xmlhttprequest"]
+	},
+	['requestBody']
+	);
+}
+*/
 
 // original code from https://github.com/craftwar/youtube-audio
 function processRequest(details) {
+	//console.log("processRequest requested");
 	// youtube.com/embed/ is usally for ads, you don't want to even hear the ad right?
 	if (details.originUrl.includes("https://www.youtube.com/embed/") || details.originUrl.includes(" https://accounts.youtube.com/RotateCookiesPage")) {
 		console.log("bailing! details.originUrl.includes: " + details.originUrl);
@@ -73,10 +86,12 @@ function processRequest(details) {
 		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];		
 		const audioURL = removeURLParameters(details.url, parametersToBeRemoved);
 		
-		// check if url has &redirect_counter
-		const newString = audioURL.split("&redirect_counter").pop();
-		console.log("ogString: " + audioURL);
-		console.log("newString: " + newString);
+		// check if the url has &redirect_counter and remove everything after
+		//const newString = audioURL.split('&redirect_counter')[0];
+		//console.log("ogString: " + audioURL);
+		//console.log("newString: " + newString);
+		
+		// fetch the url and check for a pre tag
 		
 		chrome.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
 		//console.log("audio URL ORIGIN: " + details.originUrl);

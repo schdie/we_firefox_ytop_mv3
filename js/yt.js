@@ -243,6 +243,45 @@ window.onload = observeUrlChange;
 // original code from https://github.com/craftwar/youtube-audio
 chrome.runtime.sendMessage('1');
 
+// attempt to fix some media sources
+async function redirectCases(url) {
+	fetch(url, {headers: {Range: `bytes=1990-1999`}}).then(response => {
+		if (response.ok) {
+			response.text().then(data => {
+				console.log("attempt to fix og data: " + data);
+				// if this is true we need data as the source to play
+				if (data.indexOf("https://") >= 0) {
+					console.log("attempt to fix the url: " + data);
+					
+					const videoElement = document.getElementsByTagName('video')[0];
+					var playPromise = videoElement.play();
+
+					if (playPromise !== undefined) {
+							playPromise.then(function() {
+								videoElement.src = data;
+								setCurrentTime();
+								videoElement.play();
+								console.log("attempt to fix!");
+								//console.log("play promise success!" + videoElement.src);
+							// Automatic playback started!
+							}).catch(function(error) {
+								// we are just going to brute force or way because youtube doesn't play nice sometimes
+								console.log("attempt to fix! error: " + error);
+								//console.log("play promise error" + videoElement.src);
+								videoElement.src = data;
+								setCurrentTime();
+								videoElement.play();
+							});
+					}
+					//videoElement.src = data;
+					//setCurrentTime();
+					//videoElement.play();
+				}
+			})
+		}
+	});
+}
+
 chrome.runtime.onMessage.addListener(
 	(request, sender, sendResponse) => {
 		console.log("main function, document.location.href : " + document.location.href);
@@ -252,7 +291,10 @@ chrome.runtime.onMessage.addListener(
 		console.log("main function, curl: " + curl);
 		// save the audio only source in case of a switch
 		recoveredAudioSource = url;
-
+		
+		// check the url for special cases
+		redirectCases(url);
+		
 		const videoElement = document.getElementsByTagName('video')[0];
 				
 		// save the video+audio source in case of a switch
