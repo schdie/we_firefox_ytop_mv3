@@ -1,16 +1,56 @@
 'use strict';
 
 /*
-I tried several approaches and I feel this is the best option when using the website
-It is not the cleanest but requires the least amount of code and doesn't have to deal
-with ciphers and most of the never ending yt changes...
-
-remaining bugs:
-1. Uncaught (in promise) DOMException: The media resource indicated by the src attribute or assigned media provider object was not suitable.
-is caused because sometimes yt returns an unplayable audio source, I need to add a logic for a re-request
-
-2. fixed
+I tried several approaches and I feel this is the best option when using the website.
+It is not the cleanest but requires the least amount of code.
+We don't have to deal with ciphers and it's probably the most resistant to YT changes.
 */
+
+// original logic code from https://github.com/craftwar/youtube-audio
+browser.runtime.onMessage.addListener(
+	(request, sender, sendResponse) => {
+		console.log("main function, document.location.href : " + document.location.href);
+		const url = request.url;
+		console.log("main function, url: " + url);
+		const curl = request.curl;
+		console.log("main function, curl: " + curl);
+		// save the audio only source in case of a switch
+		recoveredAudioSource = url;
+		
+		// check the url for special cases
+		redirectCases(url);
+		
+		const videoElement = document.getElementsByTagName('video')[0];
+				
+		// save the video+audio source in case of a switch
+		if (videoElement.src.indexOf("blob:") >= 0) {
+			originalVideoSource = videoElement.src;
+		}
+
+		// time to try to play the new source
+		if (videoElement.src != url && isAudioEnabledfromStorage === 1) {
+			// https://developer.chrome.com/blog/play-request-was-interrupted/
+			var playPromise = videoElement.play();
+
+			if (playPromise !== undefined) {
+					playPromise.then(function() {
+						videoElement.src = url;
+						setCurrentTime();
+						videoElement.play();
+						console.log("Play promise succeed!");
+					}).catch(function(error) {
+						console.log("Play promise failed: " + error);
+						// we are just going to brute force or way because youtube doesn't play nice sometimes
+						videoElement.src = url;
+						setCurrentTime();
+						videoElement.play();
+					});
+			}
+		}
+	}
+);
+
+browser.runtime.sendMessage('1');
 
 // global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
@@ -35,11 +75,11 @@ async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
 
   if (audioonly === 1) {
-		console.log("startup: audioonly is enabled");
+		console.log("startup: audioonly is enabled.");
 		isAudioEnabledfromStorage = 1;
 	} else {
 		isAudioEnabledfromStorage = 0;
-		console.log("startup: audioonly is disabled");
+		console.log("startup: audioonly is disabled.");
 	}
 }
 
@@ -99,14 +139,13 @@ async function createAudioDiv() {
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly')) {
 		// but before we leave we check if audioonly is enabled and request the audio playback
-		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
+		//if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 			// request playback to audio only
 			//playAudioOnly();
-		}
+		//}
 		console.log("audioonly div already exists, bailing.");
 		return;
 	}
-	
 	
 	// once ytp-right-controls can be safely found
 	let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
@@ -121,12 +160,8 @@ async function createAudioDiv() {
 
   // check the initial state our div should have
   if (isAudioEnabledfromStorage === 1) {
-		console.log("isAudioEnabledfromStorage? true: " + isAudioEnabledfromStorage);
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
-		// set audio url on startup when enabled
-		//playAudioOnly();
 	} else {
-		console.log("isAudioEnabledfromStorage? false: " + isAudioEnabledfromStorage);
 		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 	}
 
@@ -138,21 +173,18 @@ async function createAudioDiv() {
   
   // add an event listener for clicks on the created div and the quality menu of yt
 	monitorForClicks();
-	
-	// get the original playback source and set the global var
-	//const videoElement = document.getElementsByTagName('video')[0];
-	//var originalVideoSource = videoElement.src;
 }
 
-// monitoring for clicks on our div and the quality menu of yt
+// monitoring for clicks on our div and the video quality menu of YT
 async function monitorForClicks() {
+	// monitor our div
 	document.getElementById('audioonly').addEventListener("click", function (e) {
-		// set isAudioEnabledfromStorage
+		// set isAudioEnabledfromStorage and save it to storage
 		if (isAudioEnabledfromStorage === 1) {
 			isAudioEnabledfromStorage = 0;
 			storDisableAudioOnly();
 		} else {
-			isAudioEnabledfromStorage =1;
+			isAudioEnabledfromStorage = 1;
 			storEnableAudioOnly();
 		}
 		
@@ -177,33 +209,25 @@ async function monitorForClicks() {
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
-	/*
-	// we also monitor the change resolution button
-	//document.getElementById('ytp-id-18').addEventListener("click", function (e) {
-		document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
-		
+	// monitor the YT video quality buttons
+	document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
+		// we only care if the audioonly div is enabled (faster than checking storage)
 		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
-		// this is a hack, but when clicking on any child element in ytp-id-18...
-		var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
-		console.log("elText outside: " + elT);
-		// ...that contains any of the following text values (doesn't work with "Auto")
-		if (elT.includes("2160p") || elT.includes("1440p") || elT.includes("1080p") || elT.includes("720p") || elT.includes("480p") || elT.includes("360p") || elT.includes("240p") || elT.includes("144p")) {
-			console.log("elText inside: " + elT);
-			// and set the audioonly div button to disabled
-			document.getElementById('audioonly').setAttribute("aria-pressed", "false");
-			// set audioonly storage to false
-			storDisableAudioOnly();
-			// remove event listener
-			//document.getElementById('ytp-id-18').removeEventListener("click", e);
-			//this.removeEventListener('click', arguments.callee, false);
-			
-		} //else if {
-			// especial case when selecting "Auto"
-			//console.log("some bullshit");
-		//}
+			// this is a hack, but when clicking on any child element in ytp-menuitem-label...
+			var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
+			// ...that contains any of the following text values
+			if (elT.includes("2160p") || elT.includes("1440p") || elT.includes("1080p") || elT.includes("720p") || elT.includes("480p") || elT.includes("360p") || elT.includes("240p") || elT.includes("144p")) {
+				// set the audioonly div button to disabled
+				document.getElementById('audioonly').setAttribute("aria-pressed", "false");
+				// set audioonly storage to false
+				storDisableAudioOnly();
+				// set isAudioEnabledfromStorage var
+				isAudioEnabledfromStorage = 0;
+				// request to play video+audio
+				playVideoWithAudio();
+			}
 		}
 	});
-	*/
 }
 
 // on document load only, mostly executed only once since yt is a dynamic website
@@ -240,19 +264,18 @@ const observeUrlChange = () => {
 
 window.onload = observeUrlChange;
 
-// original code from https://github.com/craftwar/youtube-audio
-chrome.runtime.sendMessage('1');
-
 // attempt to fix some media sources
 async function redirectCases(url) {
+	// no need to grab the whole thing, this is important because most of the times this could be a large-ish file
 	fetch(url, {headers: {Range: `bytes=1990-1999`}}).then(response => {
 		if (response.ok) {
 			response.text().then(data => {
-				console.log("attempt to fix og data: " + data);
-				// if this is true we need data as the source to play
+				console.log("redirectCases: received data (truncated): " + data);
+				// if this is true we need the new data as the actual source to play
 				if (data.indexOf("https://") >= 0) {
-					console.log("attempt to fix the url: " + data);
+					console.log("Attempt to fix the source url: " + data);
 					
+					// this may create a race condition in some rare circunstances
 					const videoElement = document.getElementsByTagName('video')[0];
 					var playPromise = videoElement.play();
 
@@ -261,68 +284,16 @@ async function redirectCases(url) {
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
-								console.log("attempt to fix!");
-								//console.log("play promise success!" + videoElement.src);
-							// Automatic playback started!
+								console.log("Attempt to fix Play promise succeed!");
 							}).catch(function(error) {
-								// we are just going to brute force or way because youtube doesn't play nice sometimes
-								console.log("attempt to fix! error: " + error);
-								//console.log("play promise error" + videoElement.src);
+								console.log("Attempt to fix Play promise failed: " + error);
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
 							});
 					}
-					//videoElement.src = data;
-					//setCurrentTime();
-					//videoElement.play();
 				}
 			})
 		}
 	});
 }
-
-chrome.runtime.onMessage.addListener(
-	(request, sender, sendResponse) => {
-		console.log("main function, document.location.href : " + document.location.href);
-		const url = request.url;
-		console.log("main function, url: " + url);
-		const curl = request.curl;
-		console.log("main function, curl: " + curl);
-		// save the audio only source in case of a switch
-		recoveredAudioSource = url;
-		
-		// check the url for special cases
-		redirectCases(url);
-		
-		const videoElement = document.getElementsByTagName('video')[0];
-				
-		// save the video+audio source in case of a switch
-		if (videoElement.src.indexOf("blob:") >= 0) {
-			originalVideoSource = videoElement.src;
-		}
-
-		if (videoElement.src != url && isAudioEnabledfromStorage === 1) {
-			// https://developer.chrome.com/blog/play-request-was-interrupted/
-			var playPromise = videoElement.play();
-
-			if (playPromise !== undefined) {
-					playPromise.then(function() {
-						videoElement.src = url;
-						setCurrentTime();
-						videoElement.play();
-						console.log("play promise success!");
-						//console.log("play promise success!" + videoElement.src);
-					// Automatic playback started!
-					}).catch(function(error) {
-						// we are just going to brute force or way because youtube doesn't play nice sometimes
-						console.log("play promise error: " + error);
-						//console.log("play promise error" + videoElement.src);
-						videoElement.src = url;
-						setCurrentTime();
-						videoElement.play();
-					});
-			}
-		}
-	}
-);
