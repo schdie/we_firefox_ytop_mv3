@@ -45,13 +45,6 @@ function processRequest(details) {
 		return;
 	}
 	
-	if (currentURL) {
-		if (currentURL.includes("accounts.youtube.com/RotateCookiesPage")) {
-			console.log("bailing! currentURL: " + currentURL);
-			return;
-		}
-	}
-	
 	// here we are forcing itag 251, with a little more code we could choose from 139/140/141/171/172/249/250/251/256/258
 	// 251 is probably the safest bet and has the best quality
 	if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {

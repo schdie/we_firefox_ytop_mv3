@@ -118,19 +118,25 @@ function playVideoWithAudio() {
 
 // get the current time of the player to allow for a seamless switch
 function setCurrentTime() {
-	// find the video element
-	const videoElement = document.getElementsByTagName('video')[0];
-	// save the current player time
-	var currentTime = document.getElementsByClassName("ytp-time-current")[0];
-	// convert the time into seconds
-	var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-	// set the current time for the video element
-	videoElement.currentTime = currentTimeSeconds;
+	// desktop
+	if (!document.location.href.includes('m.youtube.com/watch?')) {
+		// find the video element
+		const videoElement = document.getElementsByTagName('video')[0];
+		// save the current player time
+		var currentTime = document.getElementsByClassName("ytp-time-current")[0];
+		// convert the time into seconds
+		var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
+		// set the current time for the video element
+		videoElement.currentTime = currentTimeSeconds;
+		/*
+		// mobile document.getElementsByClassName("time-first");
+		*/
+	}
 }
 
 // function to create our audioonly div
 async function createAudioDiv() {
-	// ytp-right-controls needs to be loaded before we can attach our div to it
+	// ytp-right-controls needs to be loaded before we can attach our div to it 
 	// there's more than one ytp-right-controls, once 'movie_player' has loaded we can get the first one safely
 	while(!document.getElementById('movie_player')) {
 		await new Promise(r => requestAnimationFrame(r));
@@ -147,29 +153,57 @@ async function createAudioDiv() {
 		return;
 	}
 	
-	// once ytp-right-controls can be safely found
-	let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
+	if (document.getElementsByClassName('ytp-right-controls')[0]) {
+		console.log("Desktop button.");
+		// once ytp-right-controls can be safely found
+		let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
+		
+		// we create the new div to append right before ytp-right-controls
+		let audiotdiv = document.createElement("div");
+		
+		// sometimes there's a race condition at startup, this fixes that
+		while(isAudioEnabledfromStorage == null) {
+			await new Promise(r => requestAnimationFrame(r));
+		}
 
-	// we create the new div to append right before ytp-right-controls
-  let audiotdiv = document.createElement("div");
-  
-  // sometimes there's a race condition at startup, this fixes that
-  while(isAudioEnabledfromStorage == null) {
-		await new Promise(r => requestAnimationFrame(r));
-	}
+		// check the initial state our div should have
+		if (isAudioEnabledfromStorage === 1) {
+			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+		} else {
+			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+		}
 
-  // check the initial state our div should have
-  if (isAudioEnabledfromStorage === 1) {
-		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+		// get the parent node
+		let parentDiv = ytpRightControlsElement.parentNode;
+
+		// insert the new elements to the left of the ytp-right-controls div
+		parentDiv.insertBefore(audiotdiv, ytpRightControlsElement);
 	} else {
-		audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+		/*
+		// mobile
+		while(!document.getElementById('app')) {
+			await new Promise(r => requestAnimationFrame(r));
+		}
+	
+		console.log("mobile button.");
+		let ytpRightControlsElementMobile = document.getElementById('app');
+		//ytpRightControlsElementMobile.remove();
+		//document.getElementsByClassName('player-controls-top').innerHTML += '<button id="audioonly" aria-label="Autoplay is off" aria-pressed="false" class="ytm-autonav-toggle-button-container"><c3-icon class="spanner-icon-off"><svg width="36" height="14" viewBox="0 0 36 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" width="34" height="14" rx="7" fill="white" fill-opacity="0.5"></rect></svg></c3-icon><c3-icon class="pause-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="10" fill="#717171"></rect><rect x="6" y="5.33" width="2.67" height="9.33" fill="white"></rect><rect x="11.33" y="5.33" width="2.67" height="9.33" fill="white"></rect></svg></c3-icon></button>';
+		console.log("ytpRightControlsElementMobile: " + ytpRightControlsElementMobile);
+		
+		let audiotdivMobile = document.createElement("button");
+		//<button id="audioonly" class="yt-spec-button-shape-next yt-spec-button-shape-next--text yt-spec-button-shape-next--overlay yt-spec-button-shape-next--size-l yt-spec-button-shape-next--icon-button" style="" aria-label="false" title="Audio-only Toggle"><c3-icon><svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z"></path></svg></c3-icon></div><yt-touch-feedback-shape style="border-radius: inherit;"><div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--overlay-touch-response" aria-hidden="true"><div class="yt-spec-touch-feedback-shape__stroke" style=""></div><div class="yt-spec-touch-feedback-shape__fill" style=""></div></div></yt-touch-feedback-shape></button>
+		audiotdivMobile.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytm-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg><div class="ytp-unmute-box"></button>';
+		console.log("audiotdivMobile: " + audiotdivMobile);
+		
+		//let parentDivMobile = ytpRightControlsElementMobile.parentNode;
+		//console.log("parentDivMobile: " + parentDivMobile);
+		 
+		// insert the new elements to the left of the player-controls-top div
+		//ytpRightControlsElementMobile.appendChild(audiotdivMobile);
+		document.getElementsByClassName('player-controls-top').innerHTML += '<button aria-label="Autoplay is off" aria-pressed="false" class="ytm-autonav-toggle-button-container"><c3-icon class="spanner-icon-off"><svg width="36" height="14" viewBox="0 0 36 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" width="34" height="14" rx="7" fill="white" fill-opacity="0.5"></rect></svg></c3-icon><c3-icon class="pause-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="10" fill="#717171"></rect><rect x="6" y="5.33" width="2.67" height="9.33" fill="white"></rect><rect x="11.33" y="5.33" width="2.67" height="9.33" fill="white"></rect></svg></c3-icon></button>';	
+		*/
 	}
-
-	// get the parent node
-	let parentDiv = ytpRightControlsElement.parentNode;
-
-  // insert the new elements to the left of the ytp-right-controls div
-  parentDiv.insertBefore(audiotdiv, ytpRightControlsElement);
   
   // add an event listener for clicks on the created div and the quality menu of yt
 	monitorForClicks();
@@ -233,7 +267,7 @@ async function monitorForClicks() {
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
 	// if it's a video page
-	if (document.location.href.includes('.youtube.com/watch?v=')) {
+	if (document.location.href.includes('.youtube.com/watch?')) {
 		urlChanged();
 		createAudioDiv();
 	}
@@ -245,7 +279,7 @@ const observeUrlChange = () => {
   let oldHref = document.location.href;
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
-		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?v=')) {
+		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
 			oldHref = document.location.href;
       // on changes
       console.log("URL changed, not main page: " + oldHref);
@@ -254,7 +288,7 @@ const observeUrlChange = () => {
 			// try to create our div if not already
 			createAudioDiv();
 			//
-    } else if (document.location.href == 'https://www.youtube.com/') {
+    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
 			console.log("url changed, main page!");
 			// maybe check here for the mini player
 		}
@@ -263,6 +297,17 @@ const observeUrlChange = () => {
 };
 
 window.onload = observeUrlChange;
+//window.onload = function() { observeUrlChange() };
+
+/*
+window.addEventListener('popstate', listener);
+
+const pushUrl = (href) => {
+  history.pushState({}, '', href);
+  window.dispatchEvent(new Event('popstate'));
+  console.log("page changed new~!");
+};
+*/
 
 // attempt to fix some media sources
 async function redirectCases(url) {
@@ -297,3 +342,30 @@ async function redirectCases(url) {
 		}
 	});
 }
+
+// disable page-focus on mobile firefox to allow background play
+// original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
+// https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
+
+// visibilitychange events are captured and stopped 
+document.addEventListener("visibilitychange", function(e) {
+	e.stopImmediatePropagation();
+}, true);
+
+// document.visibilityState always returns false
+Object.defineProperty(Document.prototype, "hidden", {
+	get: function hidden() {
+		return false;
+	},
+	enumerable: true,
+	configurable: true
+});
+
+// document.visibilityState always returns "visible"
+Object.defineProperty(Document.prototype, "visibilityState", {
+	get: function visibilityState() {
+		return "visible";
+	},
+	enumerable: true,
+	configurable: true
+});
