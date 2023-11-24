@@ -1,7 +1,7 @@
 ## firefox webextension
 ### **Tube Audio Options+**
 ### Manifest *v3*
-**Small extension to add the following functionality to <span style="color:red">youtube.com</span> and <span style="color:red">m.youtube.com</span> video player:**
+**Small extension to add the following functionality to $${\color{red}youtube.com}$$ and $${\color{red}m.youtube.com}$$ video player:**
 
 - Audio only playback:
 	- Completely disables video rendering when the audio only toggle is enabled.
