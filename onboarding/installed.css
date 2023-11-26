@@ -329,6 +329,14 @@ input, select, textarea {
 
 	}
 
+/* own */
+
+#disclaimer{
+    color: red;
+    font-size: 0.8em;
+    margin-top: 1em;
+}
+
 /* Icon */
 
 	.icon {
@@ -509,7 +517,7 @@ input, select, textarea {
 			input[type="button"].primary:hover,
 			button.primary:hover,
 			.button.primary:hover {
-				background-color: #f2849e;
+				background-color: #bd535e; /* mod */
 			}
 
 			input[type="submit"].primary:active,
@@ -687,7 +695,7 @@ input, select, textarea {
 /* Main */
 
 	#main {
-		padding: 0em 0 6em 0 ;
+		padding: 0em 0 1em 0 ; /* mod */
 	}
 
 		@media screen and (max-width: 736px) {
