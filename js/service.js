@@ -1,9 +1,58 @@
 'use strict';
 
-// fires when first installed but also on browser update or extension update
-browser.runtime.onInstalled.addListener(() => {
-	setDefaultValues();
+// listen on install only
+browser.runtime.onInstalled.addListener(async ({ reason, temporary }) => {
+  //if (temporary) return; // skip during development
+  switch (reason) {
+    case "install":
+      {
+				// onboarding page
+        const url = browser.runtime.getURL("onboarding/installed.html");
+        await browser.tabs.create({ url });
+        // set defaults in storage
+        setDefaultValues();
+      }
+      break;
+    // see below
+  }
 });
+
+// listen for permissions changes
+browser.permissions.onRemoved.addListener(reqPerm);
+browser.permissions.onAdded.addListener(reqPerm);
+
+// decide what to do when permissions change
+async function reqPerm() {
+	let challengeAllPerms = {
+		origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"],
+		permissions: ["storage", "webRequest"],
+	};
+	
+	let challengeOriginsPerms = {
+		origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"],
+	};
+	
+	let challengeBasicPerms = {
+		permissions: ["storage", "webRequest"],
+	};
+	
+	const allperms = await browser.permissions.contains(challengeAllPerms);
+	const originsperms = await browser.permissions.contains(challengeOriginsPerms);
+	const basicperms = await browser.permissions.contains(challengeBasicPerms);
+	
+	console.log("allperms: " + allperms);
+	console.log("originsperms: " + originsperms);
+	console.log("basicperms: " + basicperms);
+	
+	//let getContains = browser.permissions.contains(
+	//	permissions                // Permissions object
+	//)
+//	console.log("getContains: " + getContains);
+	// request them
+	//await browser.permissions.request({
+	//	origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"]
+	//})
+}
 
 // on installation the audio only option is set to false
 async function setDefaultValues() {
@@ -29,7 +78,7 @@ browser.runtime.onMessage.addListener(
 	}
 );
 
-// always listening for urls, content script decides if plays audio only or not
+// always listening for urls, content script decides what to play
 function checkAudioUrls() {
 	browser.webRequest.onBeforeRequest.addListener(
 		processRequest,
