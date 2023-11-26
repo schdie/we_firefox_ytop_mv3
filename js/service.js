@@ -20,12 +20,14 @@ var oldURL;
 // Get the current url
 browser.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
+		// in case the user reloads the page
+		if (currentURL == request.currloc) {
+			oldURL = "";
+		}
 		currentURL = request.currloc;
-		//console.log("currentURL: " + request.currloc);
+		console.log("requested currentURL: " + request.currloc);
 	}
 );
-
-checkAudioUrls();
 
 // always listening for urls, content script decides if plays audio only or not
 function checkAudioUrls() {
@@ -37,6 +39,8 @@ function checkAudioUrls() {
 	});
 }
 
+checkAudioUrls();
+
 // original code from https://github.com/craftwar/youtube-audio
 function processRequest(details) {
 	// youtube.com/embed/ is usally for ads, you don't want to even hear the ad right?
@@ -45,12 +49,21 @@ function processRequest(details) {
 		return;
 	}
 	
+	if (!currentURL !== oldURL) {
+		console.log("currentURL = oldURL");
+	}
 	// here we are forcing itag 251, with a little more code we could choose from 139/140/141/171/172/249/250/251/256/258
 	// 251 is probably the safest bet and has the best quality
 	if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {
 		// reverse parameter order (same as url parameter traversal order)
 		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];		
 		const audioURL = removeURLParameters(details.url, parametersToBeRemoved);
+		
+		// we only care about videos
+		if (!currentURL.includes('.youtube.com/watch?')) {
+			console.log("bailing! currentURL: " + currentURL);
+			return;
+		}
 		
 		console.log("-------------------------");
 		console.log("currentURL: " + currentURL);

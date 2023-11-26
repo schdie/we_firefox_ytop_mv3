@@ -128,9 +128,20 @@ function setCurrentTime() {
 		var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
 		// set the current time for the video element
 		videoElement.currentTime = currentTimeSeconds;
-		/*
-		// mobile document.getElementsByClassName("time-first");
-		*/
+	} else {
+	// mobile
+	// find the video element
+		const videoElement = document.getElementsByTagName('video')[0];
+		console.log("mobile videoElement: " + videoElement);
+		// save the current player time
+		//var currentTime = document.getElementsByClassName("ytm-time-display")[0];
+		//console.log("mobile time: " + currentTime.outerHTML);
+		// convert the time into seconds
+		//var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
+		
+		// use the href &t=xxxxxs
+		// set the current time for the video element
+		//videoElement.currentTime = currentTimeSeconds;
 	}
 }
 
@@ -179,30 +190,34 @@ async function createAudioDiv() {
 		// insert the new elements to the left of the ytp-right-controls div
 		parentDiv.insertBefore(audiotdiv, ytpRightControlsElement);
 	} else {
-		/*
+		console.log("mobile div!");
+		
 		// mobile
-		while(!document.getElementById('app')) {
+		while(!document.getElementsByClassName('icon-share_arrow')[0]) {
 			await new Promise(r => requestAnimationFrame(r));
 		}
 	
-		console.log("mobile button.");
-		let ytpRightControlsElementMobile = document.getElementById('app');
+		let ytpRightControlsElementMobile = document.getElementsByClassName('icon-share_arrow')[0];
 		//ytpRightControlsElementMobile.remove();
 		//document.getElementsByClassName('player-controls-top').innerHTML += '<button id="audioonly" aria-label="Autoplay is off" aria-pressed="false" class="ytm-autonav-toggle-button-container"><c3-icon class="spanner-icon-off"><svg width="36" height="14" viewBox="0 0 36 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" width="34" height="14" rx="7" fill="white" fill-opacity="0.5"></rect></svg></c3-icon><c3-icon class="pause-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="10" fill="#717171"></rect><rect x="6" y="5.33" width="2.67" height="9.33" fill="white"></rect><rect x="11.33" y="5.33" width="2.67" height="9.33" fill="white"></rect></svg></c3-icon></button>';
 		console.log("ytpRightControlsElementMobile: " + ytpRightControlsElementMobile);
 		
-		let audiotdivMobile = document.createElement("button");
+		let audiotdivMobile = document.createElement("div");
+		//audiotdivMobile.innerHTML = '<ytm-button-renderer id="audioonly" class="slim_video_action_bar_renderer_button icon-share_arrow"><button class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m yt-spec-button-shape-next--icon-leading" style="" aria-label="" title=""><div class="yt-spec-button-shape-next__icon" aria-hidden="true"><c3-icon><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z"></path></svg></c3-icon></div><div class="yt-spec-button-shape-next__button-text-content"><span class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap" role="text">Share</span></div><yt-touch-feedback-shape style="border-radius: inherit;"><div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--touch-response" aria-hidden="true"><div class="yt-spec-touch-feedback-shape__stroke" style=""></div><div class="yt-spec-touch-feedback-shape__fill" style=""></div></div></yt-touch-feedback-shape></button></ytm-button-renderer>';
+		audiotdivMobile.innerHTML = '<ytm-button-renderer id="audioonly" class="slim_video_action_bar_renderer_button icon-share_arrow"><button class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m yt-spec-button-shape-next--icon-leading" style="" aria-label="Pls Respond" title=""><div class="yt-spec-button-shape-next__icon" aria-hidden="true"><c3-icon><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M15,5.63L20.66,12L15,18.37V15v-1h-1c-3.96,0-7.14,1-9.75,3.09c1.84-4.07,5.11-6.4,9.89-7.1L15,9.86V9V5.63 M14,3v6 C6.22,10.13,3.11,15.33,2,21c2.78-3.97,6.44-6,12-6v6l8-9L14,3L14,3z"></path></svg></c3-icon></div><div class="yt-spec-button-shape-next__button-text-content"><span class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap" role="text">Share</span></div><yt-touch-feedback-shape style="border-radius: inherit;"><div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--touch-response" aria-hidden="true"><div class="yt-spec-touch-feedback-shape__stroke" style=""></div><div class="yt-spec-touch-feedback-shape__fill" style=""></div></div></yt-touch-feedback-shape></button></ytm-button-renderer>';
+		//<ytm-button-renderer class="slim_video_action_bar_renderer_button icon-share_arrow"><button class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m yt-spec-button-shape-next--icon-leading" style="" aria-label="" title=""><div class="yt-spec-button-shape-next__icon" aria-hidden="true"><c3-icon><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z"></path></svg></c3-icon></div><div class="yt-spec-button-shape-next__button-text-content"><span class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap" role="text">Share</span></div><yt-touch-feedback-shape style="border-radius: inherit;"><div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--touch-response" aria-hidden="true"><div class="yt-spec-touch-feedback-shape__stroke" style=""></div><div class="yt-spec-touch-feedback-shape__fill" style=""></div></div></yt-touch-feedback-shape></button></ytm-button-renderer>
+		//ytpRightControlsElementMobile.appendChild(audiotdivMobile);
 		//<button id="audioonly" class="yt-spec-button-shape-next yt-spec-button-shape-next--text yt-spec-button-shape-next--overlay yt-spec-button-shape-next--size-l yt-spec-button-shape-next--icon-button" style="" aria-label="false" title="Audio-only Toggle"><c3-icon><svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z"></path></svg></c3-icon></div><yt-touch-feedback-shape style="border-radius: inherit;"><div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--overlay-touch-response" aria-hidden="true"><div class="yt-spec-touch-feedback-shape__stroke" style=""></div><div class="yt-spec-touch-feedback-shape__fill" style=""></div></div></yt-touch-feedback-shape></button>
-		audiotdivMobile.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytm-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg><div class="ytp-unmute-box"></button>';
-		console.log("audiotdivMobile: " + audiotdivMobile);
+		//audiotdivMobile.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytm-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg><div class="ytp-unmute-box"></button>';
+		//console.log("audiotdivMobile: " + audiotdivMobile);
 		
-		//let parentDivMobile = ytpRightControlsElementMobile.parentNode;
+		let parentDivMobile = ytpRightControlsElementMobile.parentNode;
 		//console.log("parentDivMobile: " + parentDivMobile);
 		 
 		// insert the new elements to the left of the player-controls-top div
-		//ytpRightControlsElementMobile.appendChild(audiotdivMobile);
-		document.getElementsByClassName('player-controls-top').innerHTML += '<button aria-label="Autoplay is off" aria-pressed="false" class="ytm-autonav-toggle-button-container"><c3-icon class="spanner-icon-off"><svg width="36" height="14" viewBox="0 0 36 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" width="34" height="14" rx="7" fill="white" fill-opacity="0.5"></rect></svg></c3-icon><c3-icon class="pause-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="10" fill="#717171"></rect><rect x="6" y="5.33" width="2.67" height="9.33" fill="white"></rect><rect x="11.33" y="5.33" width="2.67" height="9.33" fill="white"></rect></svg></c3-icon></button>';	
-		*/
+		parentDivMobile.insert(audiotdivMobile, ytpRightControlsElementMobile);
+		//document.getElementsByClassName('player-controls-top').innerHTML += '<button aria-label="Autoplay is off" aria-pressed="false" class="ytm-autonav-toggle-button-container"><c3-icon class="spanner-icon-off"><svg width="36" height="14" viewBox="0 0 36 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" width="34" height="14" rx="7" fill="white" fill-opacity="0.5"></rect></svg></c3-icon><c3-icon class="pause-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="10" fill="#717171"></rect><rect x="6" y="5.33" width="2.67" height="9.33" fill="white"></rect><rect x="11.33" y="5.33" width="2.67" height="9.33" fill="white"></rect></svg></c3-icon></button>';	
+		
 	}
   
   // add an event listener for clicks on the created div and the quality menu of yt
@@ -270,7 +285,13 @@ document.addEventListener("DOMContentLoaded", function(){
 	if (document.location.href.includes('.youtube.com/watch?')) {
 		urlChanged();
 		createAudioDiv();
+		console.log("dom loaded!: " + document.location.href);
 	}
+});
+
+window.addEventListener("beforeunload", function (event) {
+   //your code goes here on location change 
+   console.log("URL changed beforeunload: " + document.location.href);
 });
 
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
