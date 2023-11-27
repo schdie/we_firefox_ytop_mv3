@@ -331,10 +331,16 @@ input, select, textarea {
 
 /* own */
 
-#disclaimer{
-    color: red;
-    font-size: 0.8em;
-    margin-top: 1em;
+#disclaimer {
+	color: red;
+	font-size: 0.8em;
+	margin-top: 1em;
+}
+
+#disclaimer_b {
+	color: black;
+	font-size: 0.8em;
+	margin-top: -0.5em;
 }
 
 /* Icon */
