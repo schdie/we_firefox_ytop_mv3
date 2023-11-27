@@ -12,7 +12,6 @@
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream.
 	- Using the miniplayer may have unexpected results.
 
-Works best alongside an adblocker like [ublock Origin](https://github.com/gorhill/uBlock).
 ---
 
 Used the main logic code from [here](https://github.com/craftwar/youtube-audio).  
@@ -22,3 +21,5 @@ The extension is heavily commented and was created for educational purposes only
 Logo created using AI with the following prompt: "create a logo using the silhouette of a headphone with mostly a red shadow printing the letters Y and T that does not infringe copyright" @ [https://diffusionart.co](https://diffusionart.co).  
 
 The SVG icon path was created with [https://www.svgviewer.dev/](https://www.svgviewer.dev).  
+
+Works best alongside an adblocker like [ublock Origin](https://github.com/gorhill/uBlock).  
