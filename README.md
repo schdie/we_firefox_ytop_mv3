@@ -11,6 +11,7 @@
 	- Doesn't work on live streams.
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream.
 	- Using the miniplayer may have unexpected results.  
+
 Works best alongside an adblocker like ublock Origin.
 ---
 
