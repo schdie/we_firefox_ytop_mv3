@@ -102,6 +102,10 @@ async function storDisableAudioOnly() {
 function playAudioOnly() {
 	console.log("playAudioOnly called: " + recoveredAudioSource);
 	const videoElement = document.getElementsByTagName('video')[0];
+	
+	// check the url for special cases
+	redirectCases(recoveredAudioSource);
+	
 	videoElement.src = recoveredAudioSource;
 	setCurrentTime();
 	videoElement.play();
