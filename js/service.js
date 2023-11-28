@@ -44,14 +44,8 @@ async function reqPerm() {
 	console.log("originsperms: " + originsperms);
 	console.log("basicperms: " + basicperms);
 	
-	//let getContains = browser.permissions.contains(
-	//	permissions                // Permissions object
-	//)
-//	console.log("getContains: " + getContains);
-	// request them
-	//await browser.permissions.request({
-	//	origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"]
-	//})
+	// we only bother the user once
+	
 }
 
 // on installation the audio only option is set to false
