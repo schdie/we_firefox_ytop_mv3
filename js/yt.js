@@ -136,24 +136,20 @@ function setCurrentTime() {
 	// mobile
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
-		//console.log("videoElement.currentTime mobile: " + videoElement);
-		let whatev = document.getElementsByClassName('time-first')[0];
-		console.log("whatev mobile: " + whatev.textContent);
 		
 		// this works when switching because the time is usually not 0
 		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
-		if (currentTimeSwitch !== 0) {
+		if (currentTimeSwitch.textContent !== "0:00") {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
 			videoElement.currentTime = currentTimeSwitchSeconds;
 		} else { // this is hacky at best, if time is zero but the url has a timestamp we use that
-			// get the time from the url
+			// get the time from href
 			let urlTime = document.location.href.split('&t=');
 			// only when there may be some time
 			if (urlTime.length >= 2) {
 				//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
 				let mobTime = urlTime[1].split('s');
 				// set the current time for the video element
-				console.log("mobile time splited: " + mobTime[0]);
 				videoElement.currentTime = mobTime[0];
 			}
 		}
