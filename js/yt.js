@@ -137,9 +137,10 @@ function setCurrentTime() {
 		// only when there may be some time
 		if (urlTime.length >= 2) {
 			//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
-			let mobTime = urlTime[1].slice(0, -1);
+			let mobTime = urlTime[1].split('s');
 			// set the current time for the video element
-			videoElement.currentTime = mobTime;
+			console.log("mobile time splited: " + mobTime[0]);
+			videoElement.currentTime = mobTime[0];
 		}
 	}
 }
