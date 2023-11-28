@@ -130,19 +130,17 @@ function setCurrentTime() {
 		videoElement.currentTime = currentTimeSeconds;
 	} else {
 	// mobile
-	// find the video element
+		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
-		console.log("mobile videoElement: " + videoElement);
-		// save the current player time
-		//var currentTime = document.getElementsByClassName("ytm-time-display")[0];
-		//console.log("mobile time: " + currentTime.outerHTML);
-		// convert the time into seconds
-		//var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-		
-		
-		// use the href &t=xxxxxs
-		// set the current time for the video element
-		//videoElement.currentTime = currentTimeSeconds;
+		// get the time from the url
+		let urlTime = document.location.href.split('&t=');
+		// only when there may be some time
+		if (urlTime.length >= 2) {
+			//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
+			let mobTime = urlTime[1].slice(0, -1);
+			// set the current time for the video element
+			videoElement.currentTime = mobTime;
+		}
 	}
 }
 
@@ -207,7 +205,6 @@ async function createAudioDiv() {
 			height:5.5rem;
 			bottom:3rem;
 			left:1rem;
-			color:#FFF;
 			border-radius:50px;
 			text-align:center;
 			box-shadow: 0.7rem 0.7rem 1.1rem #000;
@@ -226,9 +223,9 @@ async function createAudioDiv() {
 			
 			// check the initial state our div button should have
 			if (isAudioEnabledfromStorage === 1) {
-				mobileFloatButton.innerHTML = '<a style="background-color:#F24033 !important" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
+				mobileFloatButton.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
 			} else {
-				mobileFloatButton.innerHTML = '<a style="background-color:#DDDDDD !important" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
+				mobileFloatButton.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
 			}
 			
 			// append the button to the body
@@ -311,16 +308,15 @@ async function monitorForClicksMobile() {
 			storEnableAudioOnly();
 		}
 		
-		//console.log("style att: " + this.getAttribute("style")); //background-color:#DDDDDD !important
 		// set the audioonly div to enabled/disabled
-		if (this.getAttribute("style") == "background-color:#DDDDDD !important") {
-			console.log("boton era blanco, ahora deberia ser rojo");
-			this.innerHTML = '<a style="background-color:#F24033 !important" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
+		if (this.getAttribute("style") == "background-color:#DDDDDD") {
+			this.setAttribute("style", "background-color:#F24033");
+			this.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
 			// and request to play audio only
 			playAudioOnly();
 		} else {
-			console.log("boton era rojo, ahora deberia ser blanco");
-			this.innerHTML = '<a style="background-color:#DDDDDD !important" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
+			this.setAttribute("style", "background-color:#DDDDDD");
+			this.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
 			// or request to play video+audio
 			playVideoWithAudio();
 		}	
