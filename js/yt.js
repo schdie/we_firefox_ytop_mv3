@@ -136,6 +136,23 @@ function setCurrentTime() {
 	// mobile
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
+		console.log("videoElement.currentTime mobile: " + videoElement.currentTime);
+		
+		// this works when switching with the toggle but not when loading a new video that was played partially before
+		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
+		if (currentTimeSwitch !== 0) {
+			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
+			videoElement.currentTime = currentTimeSwitchSeconds;
+		}
+		
+		//let totalTimeMobile = document.getElementsByClassName('time-second')[0];
+		//console.log("porcentagePlayed: " + porcentagePlayed.getAttribute("style"));
+		
+		//console.log("currentTimeSwitch: " + currentTimeSwitch.textContent);
+		//console.log("currentTimeSwitchSeconds: " + currentTimeSwitchSeconds);
+		
+		//console.log("totalTimeMobile: " + totalTimeMobile.textContent);
+		/*
 		// get the time from the url
 		let urlTime = document.location.href.split('&t=');
 		// only when there may be some time
@@ -146,6 +163,7 @@ function setCurrentTime() {
 			console.log("mobile time splited: " + mobTime[0]);
 			videoElement.currentTime = mobTime[0];
 		}
+		*/
 	}
 }
 
