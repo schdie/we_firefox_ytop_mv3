@@ -207,6 +207,7 @@ input, select, textarea {
 
 	h2 {
 		font-size: 1.1em;
+		color: green;
 	}
 
 	h3 {
@@ -711,12 +712,27 @@ input, select, textarea {
 			}
 
 		}
+		
+/* Sec */
+
+	#sec {
+		padding: 0em 0 1em 0 ; /* mod */
+		display: none;
+	}
+
+		@media screen and (max-width: 736px) {
+
+			#main {
+				padding: 0em 0 4em 0 ;
+			}
+
+		}
 
 /* Wrapper */
 
 	#wrapper > * > .inner {
 		width: 100%;
-		max-width: 33em;
+		max-width: 33em; /* a little over 500px */
 		margin: 0 auto;
 		/*padding: 0 2.5em;*/
 		padding: 0 2.5em;
