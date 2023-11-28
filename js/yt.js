@@ -136,34 +136,27 @@ function setCurrentTime() {
 	// mobile
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
-		console.log("videoElement.currentTime mobile: " + videoElement.currentTime);
+		//console.log("videoElement.currentTime mobile: " + videoElement);
+		let whatev = document.getElementsByClassName('time-first')[0];
+		console.log("whatev mobile: " + whatev.textContent);
 		
-		// this works when switching with the toggle but not when loading a new video that was played partially before
+		// this works when switching because the time is usually not 0
 		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
 		if (currentTimeSwitch !== 0) {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
 			videoElement.currentTime = currentTimeSwitchSeconds;
+		} else { // this is hacky at best, if time is zero but the url has a timestamp we use that
+			// get the time from the url
+			let urlTime = document.location.href.split('&t=');
+			// only when there may be some time
+			if (urlTime.length >= 2) {
+				//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
+				let mobTime = urlTime[1].split('s');
+				// set the current time for the video element
+				console.log("mobile time splited: " + mobTime[0]);
+				videoElement.currentTime = mobTime[0];
+			}
 		}
-		
-		//let totalTimeMobile = document.getElementsByClassName('time-second')[0];
-		//console.log("porcentagePlayed: " + porcentagePlayed.getAttribute("style"));
-		
-		//console.log("currentTimeSwitch: " + currentTimeSwitch.textContent);
-		//console.log("currentTimeSwitchSeconds: " + currentTimeSwitchSeconds);
-		
-		//console.log("totalTimeMobile: " + totalTimeMobile.textContent);
-		/*
-		// get the time from the url
-		let urlTime = document.location.href.split('&t=');
-		// only when there may be some time
-		if (urlTime.length >= 2) {
-			//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
-			let mobTime = urlTime[1].split('s');
-			// set the current time for the video element
-			console.log("mobile time splited: " + mobTime[0]);
-			videoElement.currentTime = mobTime[0];
-		}
-		*/
 	}
 }
 
