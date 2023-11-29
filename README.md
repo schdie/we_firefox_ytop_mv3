@@ -4,7 +4,7 @@
 
 - Audio only playback:
 	- On desktop it adds a toggle in the lower right corner of the video player to enable audio-only playback, allowing you to save battery by disabling the video rendering and bandwidth by downloading only the audio stream.
-	- On mobile it adds a floating button on the lower left part of the screen to enable audio-only playback, you can also "leave" the page and playback should continue normally.	
+	- On mobile it adds a semi-transparent floating button on the lower left part of the screen to enable audio-only playback, you can also "leave" the page and playback should continue normally.	
 	- Seamlessly switch between audio-only and video playback using the toggle on desktop or button on mobile.
 
 - Limitations:
