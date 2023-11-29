@@ -344,37 +344,10 @@ document.addEventListener("DOMContentLoaded", function(){
 	}
 });
 
-/*
-// looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
-// for chrome navigation.addEventListener seems a better solution
-const observeUrlChange = () => {
-  let oldHref = document.location.href;
-  const body = document.querySelector("body");
-  const observer = new MutationObserver(mutations => {
-		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
-			oldHref = document.location.href;
-      // on changes
-      console.log("URL changed, not main page: " + oldHref);
-			// send url to service worker
-			urlChanged();
-			// try to create our div if not already
-			createAudioDiv();
-			//
-    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
-			console.log("url changed, main page!");
-			// maybe check here for the mini player
-		}
-  });
-  observer.observe(body, { childList: true, subtree: true });
-};
-
-window.onload = observeUrlChange;
-*/
-
 // looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
 // for chrome navigation.addEventListener seems a better solution
 // document title seems to be more consistent than document.location.href but still not good enough, yt changes the document title every time it changes to a new video
-// unless the video has the exact same name?
+// unless the video has the exact same title name?
 window.addEventListener("load", () => {
   //let oldHref = document.title;
   let oldHref = "";
