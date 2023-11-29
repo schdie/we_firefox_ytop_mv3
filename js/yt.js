@@ -350,6 +350,9 @@ window.addEventListener("beforeunload", function (event) {
    console.log("URL changed beforeunload: " + document.location.href);
 });
 
+//const observeTitleChange = createObserver(() => document.title);
+
+/*
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
 // for chrome navigation.addEventListener seems a better solution
 const observeUrlChange = () => {
@@ -374,17 +377,35 @@ const observeUrlChange = () => {
 };
 
 window.onload = observeUrlChange;
-//window.onload = function() { observeUrlChange() };
-
-/*
-window.addEventListener('popstate', listener);
-
-const pushUrl = (href) => {
-  history.pushState({}, '', href);
-  window.dispatchEvent(new Event('popstate'));
-  console.log("page changed new~!");
-};
 */
+
+// document title seems to be more consistent than document.location.href, yt changes the document title every time it changes to a new video
+// unless the video has the exact same name?
+window.addEventListener("load", () => {
+  let oldHref = document.title;
+  const body = document.querySelector("body");
+  const observer = new MutationObserver(mutations => {
+		if (oldHref !== document.title && document.location.href.includes('.youtube.com/watch?')) {
+			oldHref = document.title;
+      // on changes
+      console.log("URL changed, not on main page: " + oldHref);
+			// send url to service worker
+			urlChanged();
+			// try to create our div if not already
+			createAudioDiv();
+			//
+    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
+			console.log("URL changed, main page!");
+			// clean old title
+			oldHref = "";
+			// although not playing anything on the main site we need to request a url change
+			// just in case the user goes back and forth between the main site and the same video
+			urlChanged();
+			// maybe check here for the mini player
+		}
+  });
+  observer.observe(body, { childList: true, subtree: true });
+});
 
 // attempt to fix some media sources
 async function redirectCases(url) {
