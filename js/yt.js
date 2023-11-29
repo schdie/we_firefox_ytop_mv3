@@ -132,8 +132,7 @@ function setCurrentTime() {
 		var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
 		// set the current time for the video element
 		videoElement.currentTime = currentTimeSeconds;
-	} else {
-	// mobile
+	} else { // mobile
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
 		
@@ -345,13 +344,6 @@ document.addEventListener("DOMContentLoaded", function(){
 	}
 });
 
-window.addEventListener("beforeunload", function (event) {
-   //your code goes here on location change 
-   console.log("URL changed beforeunload: " + document.location.href);
-});
-
-//const observeTitleChange = createObserver(() => document.title);
-
 /*
 // looking for url changes (not the best idea to use MutationObserver for url changes but this would do for now on firefox)
 // for chrome navigation.addEventListener seems a better solution
@@ -379,6 +371,8 @@ const observeUrlChange = () => {
 window.onload = observeUrlChange;
 */
 
+// looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
+// for chrome navigation.addEventListener seems a better solution
 // document title seems to be more consistent than document.location.href, yt changes the document title every time it changes to a new video
 // unless the video has the exact same name?
 window.addEventListener("load", () => {
