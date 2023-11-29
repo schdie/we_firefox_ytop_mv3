@@ -1,5 +1,5 @@
 {
-  "description": "Audio only mode for youtube.com",
+  "description": "Audio only mode for youtube.com and m.youtube.com",
   "manifest_version": 3,
   "name": "Tube Audio Options+",
   "homepage_url": "https://github.com/schdie/we_firefox_ytop_mv3",
