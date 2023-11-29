@@ -1,16 +1,6 @@
-/*
-var permsButton = document.getElementById("grantPerms");
+var closeButton = document.getElementById("close");
 
-permsButton.addEventListener("click", function(event){
-	browser.permissions.request({
-		origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"]
-	})
-});
-*/
-
-var permsButton = document.getElementById("close");
-
-permsButton.addEventListener("click", function(event){
+closeButton.addEventListener("click", function(event){
 	window.close();
 });
 
