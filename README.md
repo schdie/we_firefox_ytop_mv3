@@ -1,6 +1,5 @@
 ## Tube Audio Options+
 ### A firefox extension using manifest v3.
-### Install the extension directly from the Mozilla [here](https://addons.mozilla.org/en-US/firefox/) 
 **This extension adds the following functionality to youtube.com and m.youtube.com:**
 
 - Audio only playback:
@@ -12,6 +11,8 @@
 	- Doesn't work on live content.
 	- Using the miniplayer may have unexpected results.
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream, until it does (and also depending if you have autoplay enabled or not) it may render the video first but just for a couple of seconds.
+
+### Install it directly from Mozilla [here](https://addons.mozilla.org/en-US/firefox/).
 
 ---
 
