@@ -1,16 +1,16 @@
-## firefox webextension
-### **Tube Audio Options+**
-### Manifest *v3*
-**Small extension to add the following functionality to ${\color{red}youtube.com}$ and ${\color{red}m.youtube.com}$ video player:**
+## Tube Audio Options+, a firefox extension
+### using manifest v3. Download: 
+**This extension adds the following functionality to youtube.com and m.youtube.com:**
 
 - Audio only playback:
-	- Completely disables video rendering when the audio only toggle is enabled.
-	- Switch between video and audio seamlessly.
+	- On desktop it adds a toggle in the lower right corner of the video player to enable audio-only playback, allowing you to save battery by disabling the video rendering and bandwidth by downloading only the audio stream.
+	- On mobile it adds a toggle in the lower left part of the screen to enable audio-only playback, you can also "leave" the page and playback should continue normally.	
+	- Seamlessly switch between audio-only and video playback using the toggle.
 
 - Limitations:
-	- Doesn't work on live streams.
-	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream.
+	- Doesn't work on live content.
 	- Using the miniplayer may have unexpected results.
+	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream, until it does (and also depending if you have autoplay enabled or not) it may render the video first but just for a couple of seconds.
 
 ---
 
