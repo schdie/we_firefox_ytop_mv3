@@ -8,8 +8,8 @@
 	- Seamlessly switch between audio-only and video playback using the toggle on desktop or button on mobile.
 
 - Limitations:
-	- Doesn't work on live content.
-	- Using the miniplayer may have unexpected results.
+	- Doesn't work with live content.
+	- On desktop using the YT miniplayer may have unexpected results.
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream, until it does (and also depending if you have autoplay enabled or not) it may render the video first but just for a couple of seconds.
 
 ### Install it directly from Mozilla [here](https://addons.mozilla.org/en-US/firefox/).
