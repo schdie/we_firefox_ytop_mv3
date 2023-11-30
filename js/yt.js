@@ -142,7 +142,7 @@ function setCurrentTime() {
 		
 		// this works when switching because the time is usually not 0
 		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
-		if (currentTimeSwitch.textContent !== "0:00") {
+		if ((currentTimeSwitch) && currentTimeSwitch.textContent !== "0:00") {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
 			videoElement.currentTime = currentTimeSwitchSeconds;
 		} else { // this is hacky at best, if time is zero but the url has a timestamp we use that
