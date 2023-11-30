@@ -103,11 +103,21 @@ input, select, textarea {
 			-moz-animation: none !important;
 			-webkit-animation: none !important;
 			-ms-animation: none !important;
-			animation: none !important;
+			animation: fadeInAnimation ease 0.5s !important; /* mod */
 			-moz-transition: none !important;
 			-webkit-transition: none !important;
 			-ms-transition: none !important;
 			transition: none !important;
+		}
+		
+		/* mod */
+		@keyframes fadeInAnimation {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+     }
 		}
 
 /* Type */
@@ -730,7 +740,7 @@ input, select, textarea {
 
 /* Wrapper */
 
-	#wrapper > * > .inner {
+	#wrapper > * > .inner {		
 		width: 100%;
 		max-width: 33em; /* a little over 500px */
 		margin: 0 auto;
