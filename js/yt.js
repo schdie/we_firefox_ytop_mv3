@@ -346,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function(){
 // looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
 // for chrome navigation.addEventListener seems a better solution
 // document title seems to be more consistent than document.location.href but still not good enough, yt changes the document title every time it changes to a new video
-// unless the video has the exact same title name?
+// unless the video has the exact same title name? and you get a notification
 window.addEventListener("load", () => {
   //let oldHref = document.title;
   let oldHref = "";
