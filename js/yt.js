@@ -352,6 +352,34 @@ window.addEventListener("load", () => {
   let oldHref = "";
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
+		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
+			oldHref = document.location.href;
+      // on changes
+      console.log("URL changed, not on main page: " + oldHref);
+			// send the URL to service worker
+			urlChanged();
+			// try to create our div if not already
+			createAudioDiv();
+			//
+    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
+			console.log("URL changed, main page!");
+			// clean old title
+			oldHref = "";
+			// although not playing anything on the main site we need to request a url change
+			// just in case the user goes back and forth between the main site and the same video
+			urlChanged();
+			// maybe check here for the mini player
+		}
+  });
+  observer.observe(body, { childList: true, subtree: true });
+});
+
+/*
+window.addEventListener("load", () => {
+  //let oldHref = document.title;
+  let oldHref = "";
+  const body = document.querySelector("body");
+  const observer = new MutationObserver(mutations => {
 		if (oldHref !== document.title && document.location.href.includes('.youtube.com/watch?')) {
 			oldHref = document.title;
       // on changes
@@ -372,7 +400,8 @@ window.addEventListener("load", () => {
 		}
   });
   observer.observe(body, { childList: true, subtree: true });
-});
+}); 
+*/
 
 // attempt to fix some media sources
 async function redirectCases(url) {
@@ -408,9 +437,15 @@ async function redirectCases(url) {
 	});
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message);
-    return true;
+// if permissions are removed we politely remind the user
+chrome.runtime.onMessage.addListener((message) => {
+	if (message.weneedpermissions) {
+		console.log("we need permissions!");
+		if (document.location.href.includes('.youtube.com/')) {
+			//alert("Some permissions were removed from the\nTube Audio Options+ extension.\nIt can't work without them.\nConsider granting them manually if you need\nthe extension working.");
+			// decide what to do if we don't have the required permissions
+		}
+	}
 });
 
 // disable page-focus on mobile firefox to allow background play

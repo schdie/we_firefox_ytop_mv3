@@ -19,7 +19,7 @@ browser.runtime.onInstalled.addListener(async ({ reason, temporary }) => {
 
 // listen for permissions changes
 browser.permissions.onRemoved.addListener(reqPerm);
-browser.permissions.onAdded.addListener(reqPerm);
+//browser.permissions.onAdded.addListener(reqPerm);
 
 var reqPermWait = 0;
 
@@ -53,10 +53,14 @@ async function reqPerm() {
 			// alert the content script to let the user know we need the permissions to work properly
 			console.log("Sending message to content script: we need permissions.");
 			
-			//browser.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
-			//browser.tabs.sendMessage( {permMessage: "permissionsneeded"} );
-			browser.tabs.sendMessage("myMessage");
-			
+			const tabs = await chrome.tabs.query({});
+
+			for (const tab of tabs) {
+				if (!tab.id) return;
+				console.log("tab.id: " + tab.id);
+				browser.tabs.sendMessage(tab.id, {weneedpermissions: "we really need them"});
+			}
+
 			// we wait a little in case the user changes more than one permission in close sucession
 			reqPermWait = 1;
 			await new Promise(r => setTimeout(r, 5000));
