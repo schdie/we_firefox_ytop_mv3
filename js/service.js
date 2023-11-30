@@ -8,7 +8,8 @@ browser.runtime.onInstalled.addListener(async ({ reason, temporary }) => {
       {
 				// onboarding page
         const url = browser.runtime.getURL("onboarding/installed.html");
-        await browser.tabs.create({ url });
+        //await browser.tabs.create({ url });
+        await browser.tabs.create({ url, active: true });
         // set defaults in storage
         setDefaultValues();
       }
