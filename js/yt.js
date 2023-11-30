@@ -9,42 +9,46 @@ We don't have to deal with ciphers and it's probably the most resistant to YT ch
 // original logic code from https://github.com/craftwar/youtube-audio
 browser.runtime.onMessage.addListener(
 	(request, sender, sendResponse) => {
-		console.log("main function, document.location.href : " + document.location.href);
-		const url = request.url;
-		console.log("main function, url: " + url);
-		const curl = request.curl;
-		console.log("main function, curl: " + curl);
-		// save the audio only source in case of a switch
-		recoveredAudioSource = url;
-		
-		// check the url for special cases
-		redirectCases(url);
-		
-		const videoElement = document.getElementsByTagName('video')[0];
-				
-		// save the video+audio source in case of a switch
-		if (videoElement.src.indexOf("blob:") >= 0) {
-			originalVideoSource = videoElement.src;
-		}
+		if (request.url) {
+			console.log("main function, document.location.href : " + document.location.href);
+			// requested source URL
+			const url = request.url;
+			console.log("main function, url: " + url);
+			// requested current URL
+			const curl = request.curl;
+			console.log("main function, curl: " + curl);
+			// save the audio only source in case of a switch
+			recoveredAudioSource = url;
+			
+			// check the url for special cases
+			redirectCases(url);
+			
+			const videoElement = document.getElementsByTagName('video')[0];
+					
+			// save the video+audio source in case of a switch
+			if (videoElement.src.indexOf("blob:") >= 0) {
+				originalVideoSource = videoElement.src;
+			}
 
-		// time to try to play the new source
-		if (videoElement.src != url && isAudioEnabledfromStorage === 1) {
-			// https://developer.chrome.com/blog/play-request-was-interrupted/
-			var playPromise = videoElement.play();
+			// try to play the new source
+			if (videoElement.src != url && isAudioEnabledfromStorage === 1) {
+				// https://developer.chrome.com/blog/play-request-was-interrupted/
+				let playPromise = videoElement.play();
 
-			if (playPromise !== undefined) {
-					playPromise.then(function() {
-						videoElement.src = url;
-						setCurrentTime();
-						videoElement.play();
-						console.log("Play promise succeed!");
-					}).catch(function(error) {
-						console.log("Play promise failed: " + error);
-						// we are just going to brute force or way because youtube doesn't play nice sometimes
-						videoElement.src = url;
-						setCurrentTime();
-						videoElement.play();
-					});
+				if (playPromise !== undefined) {
+						playPromise.then(function() {
+							videoElement.src = url;
+							setCurrentTime();
+							videoElement.play();
+							console.log("main function, Play promise succeed!");
+						}).catch(function(error) {
+							console.log("main function, Play promise failed: " + error);
+							// we are just going to brute force or way because youtube doesn't play nice sometimes
+							videoElement.src = url;
+							setCurrentTime();
+							videoElement.play();
+						});
+				}
 			}
 		}
 	}
@@ -127,9 +131,9 @@ function setCurrentTime() {
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
 		// save the current player time
-		var currentTime = document.getElementsByClassName("ytp-time-current")[0];
+		let currentTime = document.getElementsByClassName("ytp-time-current")[0];
 		// convert the time into seconds
-		var currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
+		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
 		// set the current time for the video element
 		videoElement.currentTime = currentTimeSeconds;
 	} else { // mobile
@@ -165,11 +169,6 @@ async function createAudioDiv() {
 	
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly') || document.getElementById('audioonlym')) {
-		// but before we leave we check if audioonly is enabled and request the audio playback
-		//if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
-			// request playback to audio only
-			//playAudioOnly();
-		//}
 		console.log("audioonly or audioonlym div already exists, bailing.");
 		return;
 	}
@@ -223,24 +222,24 @@ async function createAudioDiv() {
 			opacity: 0.69;
 			border-color:blue;
 			}`
-			));
+		));
 
-			// append the style to the head
-			const head = document.getElementsByTagName('head')[0];
-			head.appendChild(style);
+		// append the style to the head
+		const head = document.getElementsByTagName('head')[0];
+		head.appendChild(style);
 			
-			// create our floaty button
-			const mobileFloatButton = document.createElement("button");
-			
-			// check the initial state our div button should have
-			if (isAudioEnabledfromStorage === 1) {
-				mobileFloatButton.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
-			} else {
-				mobileFloatButton.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
-			}
-			
-			// append the button to the body
-			document.body.appendChild(mobileFloatButton);
+		// create our floaty button
+		const mobileFloatButton = document.createElement("button");
+
+		// check the initial state our div button should have
+		if (isAudioEnabledfromStorage === 1) {
+			mobileFloatButton.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
+		} else {
+			mobileFloatButton.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
+		}
+	
+		// append the button to the body
+		document.body.appendChild(mobileFloatButton);
 	}
   
   // add an event listener for clicks on the created div and the quality menu of yt (desktop)
@@ -290,7 +289,7 @@ async function monitorForClicks() {
 		// we only care if the audioonly div is enabled (faster than checking storage)
 		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 			// this is a hack, but when clicking on any child element in ytp-menuitem-label...
-			var elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
+			let elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
 			// ...that contains any of the following text values
 			if (elT.includes("2160p") || elT.includes("1440p") || elT.includes("1080p") || elT.includes("720p") || elT.includes("480p") || elT.includes("360p") || elT.includes("240p") || elT.includes("144p")) {
 				// set the audioonly div button to disabled
@@ -340,7 +339,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	if (document.location.href.includes('.youtube.com/watch?')) {
 		urlChanged();
 		createAudioDiv();
-		console.log("dom loaded!: " + document.location.href);
+		console.log("DOMContentLoaded, '.youtube.com/watch?': " + document.location.href);
 	}
 });
 
@@ -357,7 +356,7 @@ window.addEventListener("load", () => {
 			oldHref = document.title;
       // on changes
       console.log("URL changed, not on main page: " + oldHref);
-			// send url to service worker
+			// send the URL to service worker
 			urlChanged();
 			// try to create our div if not already
 			createAudioDiv();
@@ -384,20 +383,20 @@ async function redirectCases(url) {
 				console.log("redirectCases: received data (truncated): " + data);
 				// if this is true we need the new data as the actual source to play
 				if (data.indexOf("https://") >= 0) {
-					console.log("Attempt to fix the source url: " + data);
+					console.log("redirectCases, Attempt to fix the source url: " + data);
 					
 					// this may create a race condition in some rare circunstances
 					const videoElement = document.getElementsByTagName('video')[0];
-					var playPromise = videoElement.play();
+					let playPromise = videoElement.play();
 
 					if (playPromise !== undefined) {
 							playPromise.then(function() {
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
-								console.log("Attempt to fix Play promise succeed!");
+								console.log("redirectCases, Attempt to fix Play promise succeed!");
 							}).catch(function(error) {
-								console.log("Attempt to fix Play promise failed: " + error);
+								console.log("redirectCases, Attempt to fix Play promise failed: " + error);
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
@@ -408,6 +407,11 @@ async function redirectCases(url) {
 		}
 	});
 }
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log(message);
+    return true;
+});
 
 // disable page-focus on mobile firefox to allow background play
 // original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/

@@ -21,6 +21,8 @@ browser.runtime.onInstalled.addListener(async ({ reason, temporary }) => {
 browser.permissions.onRemoved.addListener(reqPerm);
 browser.permissions.onAdded.addListener(reqPerm);
 
+var reqPermWait = 0;
+
 // decide what to do when permissions change
 async function reqPerm() {
 	let challengeAllPerms = {
@@ -40,13 +42,31 @@ async function reqPerm() {
 	const originsperms = await browser.permissions.contains(challengeOriginsPerms);
 	const basicperms = await browser.permissions.contains(challengeBasicPerms);
 	
-	console.log("allperms: " + allperms);
-	console.log("originsperms: " + originsperms);
-	console.log("basicperms: " + basicperms);
+	console.log("All permssions: " + allperms);
+	console.log("Origins permssions: " + originsperms);
+	console.log("Basic permssions: " + basicperms);
 	
-	// we only bother the user once
-	
+	// if we don't have all the permissions needed
+	if (!allperms) {
+		// and didn't request them in the last ~5 seconds
+		if (reqPermWait === 0) {
+			// alert the content script to let the user know we need the permissions to work properly
+			console.log("Sending message to content script: we need permissions.");
+			
+			//browser.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
+			//browser.tabs.sendMessage( {permMessage: "permissionsneeded"} );
+			browser.tabs.sendMessage("myMessage");
+			
+			// we wait a little in case the user changes more than one permission in close sucession
+			reqPermWait = 1;
+			await new Promise(r => setTimeout(r, 5000));
+			reqPermWait = 0;
+		}
+	}
 }
+
+// check for permissions on load
+reqPerm();
 
 // on installation the audio only option is set to false
 async function setDefaultValues() {
