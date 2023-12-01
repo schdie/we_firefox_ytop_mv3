@@ -313,7 +313,6 @@ async function monitorForClicks() {
 async function monitorForClicksMobile() {
 	// monitor our mobile div
 	document.getElementById('audioonlym').addEventListener("click", function (e) {
-		console.log("Monitoring clicks on mobile.Clicked!");
 		// set isAudioEnabledfromStorage and save it to storage
 		if (isAudioEnabledfromStorage === 1) {
 			isAudioEnabledfromStorage = 0;
@@ -324,30 +323,18 @@ async function monitorForClicksMobile() {
 		}
 		
 		if (this.getAttribute("aria-pressed") == "false") {
-			this.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float" aria-pressed="true"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
-			// and request to play audio only
-			playAudioOnly();
-		} else {
-			this.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float" aria-pressed="false"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
-			// or request to play video+audio
-			playVideoWithAudio();
-		}
-		/*
-		// set the audioonly div to enabled/disabled
-		if (this.getAttribute("style") == "background-color:#DDDDDD") {
-			console.log("background white, set to red and request audio only!");
 			this.setAttribute("style", "background-color:#F24033");
-			this.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
+			this.setAttribute("aria-pressed", "true");
+			this.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg>';
 			// and request to play audio only
 			playAudioOnly();
 		} else {
-			console.log("background red, set to white and request video with audio!" + this.getAttribute("style"));
 			this.setAttribute("style", "background-color:#DDDDDD");
-			this.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
+			this.setAttribute("aria-pressed", "false");
+			this.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg>';
 			// or request to play video+audio
 			playVideoWithAudio();
 		}
-		*/	
 	});
 }
 
