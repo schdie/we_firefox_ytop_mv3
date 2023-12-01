@@ -218,8 +218,12 @@ input, select, textarea {
 
 	h2 {
 		font-size: 1.1em;
-		color: green;
+		color: white;
 		margin-bottom: 0.5em;
+		border-top: 0.3em solid green;
+		background-color: green;
+		border-radius: 25px;
+		line-height: 1.1;
 	}
 
 	h3 {
