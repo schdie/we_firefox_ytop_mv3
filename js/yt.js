@@ -198,6 +198,9 @@ async function createAudioDiv() {
 
 		// insert the new elements to the left of the ytp-right-controls div
 		parentDiv.insertBefore(audiotdiv, ytpRightControlsElement);
+		
+		// add an event listener for clicks on the created div and the quality menu of yt (desktop)
+		monitorForClicks();
 	} else {
 		// mobile div button, icon-share_arrow only exists on mobile
 		while(!document.getElementsByClassName('icon-share_arrow')[0]) {
@@ -240,13 +243,10 @@ async function createAudioDiv() {
 	
 		// append the button to the body
 		document.body.appendChild(mobileFloatButton);
+		
+		// add an event listener for touches on the created div (mobile)
+		monitorForClicksMobile();
 	}
-  
-  // add an event listener for clicks on the created div and the quality menu of yt (desktop)
-	monitorForClicks();
-	
-	// add an event listener for touches on the created div (mobile)
-	monitorForClicksMobile();
 }
 
 // monitoring for clicks on our div and the video quality menu of YT
