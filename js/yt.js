@@ -170,6 +170,10 @@ async function createAudioDiv() {
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly') || document.getElementById('audioonlym')) {
 		console.log("audioonly or audioonlym div already exists, bailing.");
+		// in case the mobile button is already loaded but not visible
+		if (document.getElementById('audioonlym')) {
+			document.getElementById('audioonlym').style.display = "block";
+		}
 		return;
 	}
 	
@@ -368,6 +372,10 @@ window.addEventListener("load", () => {
 			// although not playing anything on the main site we need to request a url change
 			// just in case the user goes back and forth between the main site and the same video
 			urlChanged();
+			// change the mobile button visibility while on the main site
+			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
+				document.getElementById('audioonlym').style.display = "none";
+			}
 			// maybe check here for the mini player
 		}
   });
