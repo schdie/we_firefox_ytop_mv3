@@ -170,6 +170,7 @@ input, select, textarea {
 	}
 
 	p {
+		font-size: 0.75em; /* mod */
 		margin: 0 0 1em 0; /* mod */
 	}
 
@@ -218,6 +219,7 @@ input, select, textarea {
 	h2 {
 		font-size: 1.1em;
 		color: green;
+		margin-bottom: 0.5em;
 	}
 
 	h3 {
@@ -227,6 +229,7 @@ input, select, textarea {
 
 	h4 {
 		font-size: 0.8em;
+		margin-bottom: 0.5em; /* mod */
 	}
 
 	h5 {
@@ -329,13 +332,13 @@ input, select, textarea {
 	}
 
 	header p {
-		margin-top: -1em;
+		margin-top: 1em; /* mod */
 	}
 
 	@media screen and (max-width: 736px) {
 
 		header p {
-			margin-top: 0;
+			margin-top: 0.5em;
 		}
 
 	}
@@ -344,14 +347,16 @@ input, select, textarea {
 
 #disclaimer {
 	color: red;
-	font-size: 0.8em;
+	font-size: 0.75em;
 	margin-top: 1em;
+	text-align: center;
 }
 
 #disclaimer_b {
 	color: black;
-	font-size: 0.8em;
-	margin-top: -0.5em;
+	font-size: 0.75em;
+	margin-top: 0.5em;
+	text-align: center;
 }
 
 /* Icon */
@@ -718,7 +723,7 @@ input, select, textarea {
 		@media screen and (max-width: 736px) {
 
 			#main {
-				padding: 0em 0 4em 0 ;
+				padding: 0em 0 0.5em 0 ;
 			}
 
 		}
@@ -738,12 +743,13 @@ input, select, textarea {
   max-height: 90%;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 0.5em;
 	}
 
 		@media screen and (max-width: 736px) {
 
-			#main {
-				padding: 0em 0 4em 0 ;
+			#sec {
+				padding: 0em 0 0.5em 0 ;
 			}
 
 		}
