@@ -374,9 +374,9 @@ window.addEventListener("load", () => {
 			// just in case the user goes back and forth between the main site and the same video
 			urlChanged();
 			// change the mobile button visibility while on the main site
-			//if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
-			//	document.getElementById('audioonlym').style.display = "none";
-			//}
+			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
+				document.getElementById('audioonlym').style.display = "none";
+			}
 			// maybe check here for the mini player
 		}
   });
