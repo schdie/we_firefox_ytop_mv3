@@ -106,13 +106,21 @@ async function storDisableAudioOnly() {
 function playAudioOnly() {
 	console.log("playAudioOnly called: " + recoveredAudioSource);
 	const videoElement = document.getElementsByTagName('video')[0];
+
+	// on rare ocassions recoveredAudioSource is null
+	if (recoveredAudioSource) {
+		// check the url for special cases
+		redirectCases(recoveredAudioSource);
+		
+		videoElement.src = recoveredAudioSource;
+		setCurrentTime();
+		videoElement.play();
+	} else {
+		// let's try to fix it
+		console.log("recovered audio was null: " + recoveredAudioSource);
+		urlChanged();
+	}
 	
-	// check the url for special cases
-	redirectCases(recoveredAudioSource);
-	
-	videoElement.src = recoveredAudioSource;
-	setCurrentTime();
-	videoElement.play();
 }
 
 // function to play the original stream with video+audio
@@ -445,7 +453,7 @@ async function redirectCases(url) {
 					const videoElement = document.getElementsByTagName('video')[0];
 					let playPromise = videoElement.play();
 
-					if (playPromise !== undefined) {
+					if (playPromise !== undefined && isAudioEnabledfromStorage === 1) {
 							playPromise.then(function() {
 								videoElement.src = data;
 								setCurrentTime();
