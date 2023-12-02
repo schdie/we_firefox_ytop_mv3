@@ -206,8 +206,8 @@ async function createAudioDiv() {
 		// add an event listener for clicks on the created div and the quality menu of yt (desktop)
 		monitorForClicks();
 	} else {
-		// mobile div button, icon-share_arrow only exists on mobile
-		while(!document.getElementsByClassName('icon-share_arrow')[0]) {
+		// mobile div button, wait for the app element
+		while(!document.getElementById('app')) {
 			await new Promise(r => requestAnimationFrame(r));
 		}
 		
@@ -237,16 +237,24 @@ async function createAudioDiv() {
 			
 		// create our floaty button
 		const mobileFloatButton = document.createElement("button");
+		mobileFloatButton.setAttribute("id", "audioonlym");
+		mobileFloatButton.setAttribute("class", "float");
 
 		// check the initial state our div button should have
 		if (isAudioEnabledfromStorage === 1) {
-			mobileFloatButton.innerHTML = '<a style="background-color:#F24033" id="audioonlym" class="float" aria-pressed="true"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></a>';
+			mobileFloatButton.style.background = "#F24033";
+			mobileFloatButton.setAttribute("aria-pressed", "true");
+			mobileFloatButton.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg>';
 		} else {
-			mobileFloatButton.innerHTML = '<a style="background-color:#DDDDDD" id="audioonlym" class="float" aria-pressed="false"><svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg></a>';
+			mobileFloatButton.style.background = "#DDDDDD";
+			mobileFloatButton.setAttribute("aria-pressed", "false");
+			mobileFloatButton.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#797979"></path></svg>';
 		}
 		
 		// prepend (we go old school here) the button to the body
 		document.body.prepend(mobileFloatButton);
+		//document.body.parentNode.insertBefore(mobileFloatButton, document.body);
+		console.log("creating mobile button!!! ", mobileFloatButton);
 		
 		// add an event listener for touches on the created div (mobile)
 		monitorForClicksMobile();
@@ -265,7 +273,7 @@ async function monitorForClicks() {
 			isAudioEnabledfromStorage = 1;
 			storEnableAudioOnly();
 		}
-		
+
 		// set the audioonly div to enabled/disabled
 		if (this.getAttribute("aria-pressed") == "false") {
 			this.setAttribute("aria-pressed", "true");
@@ -277,6 +285,11 @@ async function monitorForClicks() {
 			playVideoWithAudio();
 		}
 		
+		// cooldown
+		document.getElementById("audioonly").disabled = true;
+		setTimeout(function(){
+			document.getElementById("audioonly").disabled = false;
+		},1700);
 	});
 	
 	// sometimes the user may click on a video resolution from the quality menu to leave "audio only" mode, so...
@@ -322,6 +335,7 @@ async function monitorForClicksMobile() {
 			storEnableAudioOnly();
 		}
 		
+		// set the audioonlym div to enabled/disabled
 		if (this.getAttribute("aria-pressed") == "false") {
 			this.setAttribute("style", "background-color:#F24033");
 			this.setAttribute("aria-pressed", "true");
@@ -335,6 +349,12 @@ async function monitorForClicksMobile() {
 			// or request to play video+audio
 			playVideoWithAudio();
 		}
+		
+		// cooldown
+		document.getElementById("audioonlym").disabled = true;
+		setTimeout(function(){
+			document.getElementById("audioonlym").disabled = false;
+		},1700);
 	});
 }
 
