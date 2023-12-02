@@ -253,8 +253,6 @@ async function createAudioDiv() {
 		
 		// prepend (we go old school here) the button to the body
 		document.body.prepend(mobileFloatButton);
-		//document.body.parentNode.insertBefore(mobileFloatButton, document.body);
-		console.log("creating mobile button!!! ", mobileFloatButton);
 		
 		// add an event listener for touches on the created div (mobile)
 		monitorForClicksMobile();
