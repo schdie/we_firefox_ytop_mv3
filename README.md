@@ -16,6 +16,19 @@
 
 ---
 
+<p align="center">
+<sub>Desktop usage:</sub>
+<img src="onboarding/usage_desktop_enabled.png" alt="Desktop enabled">
+<img src="onboarding/usage_desktop_disabled.png" alt="Desktop disabled">
+</p>
+
+<p align="center">
+<sub>Mobile usage:</sub>
+<img src="onboarding/usage_mobile.png" alt="Mobile disabled/enabled">
+</p>
+
+---
+
 Used the main logic code from [here](https://github.com/craftwar/youtube-audio).  
 
 The extension is heavily commented and was created for educational purposes only.  
