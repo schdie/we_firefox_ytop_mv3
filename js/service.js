@@ -41,22 +41,22 @@ async function reqPerm() {
 	const originsperms = await browser.permissions.contains(challengeOriginsPerms);
 	const basicperms = await browser.permissions.contains(challengeBasicPerms);
 	
-	console.log("All permssions: " + allperms);
-	console.log("Origins permssions: " + originsperms);
-	console.log("Basic permssions: " + basicperms);
+	//console.log("All permssions: " + allperms);
+	//console.log("Origins permssions: " + originsperms);
+	//console.log("Basic permssions: " + basicperms);
 	
 	// if we don't have all the permissions needed
 	if (!allperms) {
 		// and didn't request them in the last ~5 seconds
 		if (reqPermWait === 0) {
 			// alert the content script to let the user know we need the permissions to work properly
-			console.log("Sending message to content script: we need permissions.");
+			//console.log("Sending message to content script: we need permissions.");
 			
 			const tabs = await chrome.tabs.query({});
 
 			for (const tab of tabs) {
 				if (!tab.id) return;
-				console.log("tab.id: " + tab.id);
+				//console.log("tab.id: " + tab.id);
 				browser.tabs.sendMessage(tab.id, {weneedpermissions: "we really need them"});
 			}
 
@@ -91,7 +91,7 @@ browser.runtime.onMessage.addListener(
 			oldURL = "";
 		}
 		currentURL = request.currloc;
-		console.log("requested currentURL: " + request.currloc);
+		//console.log("requested currentURL: " + request.currloc);
 	}
 );
 
@@ -111,13 +111,13 @@ checkAudioUrls();
 function processRequest(details) {
 	// youtube.com/embed/ is usally for ads, you don't want to even hear the ad right?
 	if (details.originUrl.includes("https://www.youtube.com/embed/") || details.originUrl.includes(" https://accounts.youtube.com/RotateCookiesPage")) {
-		console.log("bailing! details.originUrl.includes: " + details.originUrl);
+		//console.log("bailing! details.originUrl.includes: " + details.originUrl);
 		return;
 	}
 	
 	// reviewing code I found this so funny I'm leaving it here (:
 	if (!currentURL !== oldURL) {
-		console.log("currentURL = oldURL");
+		//console.log("currentURL = oldURL");
 	}
 	// we are forcing itag 251, with a little more code we could choose from 139/140/141/171/172/249/250/251/256/258
 	// 251 is probably the safest bet and has the best quality
@@ -128,14 +128,14 @@ function processRequest(details) {
 		
 		// we only care about videos
 		if (!currentURL.includes('.youtube.com/watch?')) {
-			console.log("bailing! currentURL: " + currentURL);
+			//console.log("bailing! currentURL: " + currentURL);
 			return;
 		}
 		
-		console.log("-------------------------");
-		console.log("currentURL: " + currentURL);
-		console.log("currentURL audio only url: " + audioURL);
-		console.log("-------------------------");	
+		//console.log("-------------------------");
+		//console.log("currentURL: " + currentURL);
+		//console.log("currentURL audio only url: " + audioURL);
+		//console.log("-------------------------");	
 		
 		browser.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
 
@@ -145,7 +145,7 @@ function processRequest(details) {
 
 // used to remove parameters from the audio only url
 function removeURLParameters(url, parametersToBeRemoved) {
-	console.log("removeURLParameters executed, original url: " + url);
+	//console.log("removeURLParameters executed, original url: " + url);
 	const urlparts = url.split('?');
 	if (urlparts.length >= 2) {
 		let pars = urlparts[1].split('&');
@@ -161,6 +161,6 @@ function removeURLParameters(url, parametersToBeRemoved) {
 		}
 		url = `${urlparts[0]}?${pars.join('&')}`;
 	}
-	console.log("removeURLParameters executed, new url: " + url);
+	//console.log("removeURLParameters executed, new url: " + url);
 	return url;
 }

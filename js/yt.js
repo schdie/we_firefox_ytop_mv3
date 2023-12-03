@@ -10,13 +10,13 @@ We don't have to deal with ciphers and it's probably the most resistant to YT ch
 browser.runtime.onMessage.addListener(
 	(request, sender, sendResponse) => {
 		if (request.url) {
-			console.log("main function, document.location.href : " + document.location.href);
+			//console.log("main function, document.location.href : " + document.location.href);
 			// requested source URL
 			const url = request.url;
-			console.log("main function, url: " + url);
+			//console.log("main function, url: " + url);
 			// requested current URL
 			const curl = request.curl;
-			console.log("main function, curl: " + curl);
+			//console.log("main function, curl: " + curl);
 			// save the audio only source in case of a switch
 			recoveredAudioSource = url;
 			
@@ -40,9 +40,9 @@ browser.runtime.onMessage.addListener(
 							videoElement.src = url;
 							setCurrentTime();
 							videoElement.play();
-							console.log("main function, Play promise succeed!");
+							//console.log("main function, Play promise succeed!");
 						}).catch(function(error) {
-							console.log("main function, Play promise failed: " + error);
+							//console.log("main function, Play promise failed: " + error);
 							// we are just going to brute force or way because youtube doesn't play nice sometimes
 							videoElement.src = url;
 							setCurrentTime();
@@ -79,11 +79,11 @@ async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
 
   if (audioonly === 1) {
-		console.log("startup: audioonly is enabled.");
+		//console.log("startup: audioonly is enabled.");
 		isAudioEnabledfromStorage = 1;
 	} else {
 		isAudioEnabledfromStorage = 0;
-		console.log("startup: audioonly is disabled.");
+		//console.log("startup: audioonly is disabled.");
 	}
 }
 
@@ -104,7 +104,7 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 function playAudioOnly() {
-	console.log("playAudioOnly called: " + recoveredAudioSource);
+	//console.log("playAudioOnly called: " + recoveredAudioSource);
 	const videoElement = document.getElementsByTagName('video')[0];
 
 	// on rare ocassions recoveredAudioSource is null
@@ -117,7 +117,7 @@ function playAudioOnly() {
 		videoElement.play();
 	} else {
 		// let's try to fix it
-		console.log("recovered audio was null: " + recoveredAudioSource);
+		//console.log("recovered audio was null: " + recoveredAudioSource);
 		urlChanged();
 	}
 	
@@ -125,7 +125,7 @@ function playAudioOnly() {
 
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
-	console.log("playVideoWithAudio called: " + originalVideoSource);
+	//console.log("playVideoWithAudio called: " + originalVideoSource);
 	const videoElement = document.getElementsByTagName('video')[0];
 	videoElement.src = originalVideoSource;
 	setCurrentTime();
@@ -177,7 +177,7 @@ async function createAudioDiv() {
 	
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly') || document.getElementById('audioonlym')) {
-		console.log("audioonly or audioonlym div already exists, bailing.");
+		//console.log("audioonly or audioonlym div already exists, bailing.");
 		// in case the mobile button is already loaded but not visible
 		if (document.getElementById('audioonlym')) {
 			document.getElementById('audioonlym').style.display = "block";
@@ -370,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	if (document.location.href.includes('.youtube.com/watch?')) {
 		urlChanged();
 		createAudioDiv();
-		console.log("DOMContentLoaded, '.youtube.com/watch?': " + document.location.href);
+		//console.log("DOMContentLoaded, '.youtube.com/watch?': " + document.location.href);
 	}
 });
 
@@ -385,13 +385,13 @@ window.addEventListener("load", () => {
 		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
 			oldHref = document.location.href;
       // on changes
-      console.log("URL changed, not on main page: " + oldHref);
+      //console.log("URL changed, not on main page: " + oldHref);
 			// send the URL to service worker
 			urlChanged();
 			// try to create our div if not already
 			createAudioDiv();
     } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
-			console.log("URL changed, main page!");
+			//console.log("URL changed, main page!");
 			// clean old title
 			oldHref = "";
 			// although not playing anything on the main site we need to request a url change
@@ -413,10 +413,10 @@ async function redirectCases(url) {
 	fetch(url, {headers: {Range: `bytes=1990-1999`}}).then(response => {
 		if (response.ok) {
 			response.text().then(data => {
-				console.log("redirectCases: received data (truncated): " + data);
+				//console.log("redirectCases: received data (truncated): " + data);
 				// if this is true we need the new data as the actual source to play
 				if (data.indexOf("https://") >= 0) {
-					console.log("redirectCases, Attempt to fix the source url: " + data);
+					//console.log("redirectCases, Attempt to fix the source url: " + data);
 					
 					// this may create a race condition in some rare circunstances
 					const videoElement = document.getElementsByTagName('video')[0];
@@ -427,9 +427,9 @@ async function redirectCases(url) {
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
-								console.log("redirectCases, Attempt to fix Play promise succeed!");
+								//console.log("redirectCases, Attempt to fix Play promise succeed!");
 							}).catch(function(error) {
-								console.log("redirectCases, Attempt to fix Play promise failed: " + error);
+								//console.log("redirectCases, Attempt to fix Play promise failed: " + error);
 								videoElement.src = data;
 								setCurrentTime();
 								videoElement.play();
@@ -444,7 +444,7 @@ async function redirectCases(url) {
 // if permissions are removed we politely remind the user
 chrome.runtime.onMessage.addListener((message) => {
 	if (message.weneedpermissions) {
-		console.log("we need permissions!");
+		//console.log("we need permissions!");
 		if (document.location.href.includes('.youtube.com/')) {
 			// I still haven't decided on how to do this, I rather not be intrusive to the user
 			// decide what to do if we don't have the required permissions
