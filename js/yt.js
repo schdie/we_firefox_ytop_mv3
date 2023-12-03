@@ -248,7 +248,7 @@ async function createAudioDiv() {
 		mobileFloatButton.setAttribute("id", "audioonlym");
 		mobileFloatButton.setAttribute("class", "float");
 
-		// check the initial state our div button should have
+		// check the initial state our button should have
 		if (isAudioEnabledfromStorage === 1) {
 			mobileFloatButton.style.background = "#F24033";
 			mobileFloatButton.setAttribute("aria-pressed", "true");
@@ -262,7 +262,7 @@ async function createAudioDiv() {
 		// prepend (we go old school here) the button to the body
 		document.body.prepend(mobileFloatButton);
 		
-		// add an event listener for touches on the created div (mobile)
+		// add an event listener for touches on the created mobile button
 		monitorForClicksMobile();
 	}
 }
@@ -291,7 +291,7 @@ async function monitorForClicks() {
 			playVideoWithAudio();
 		}
 		
-		// cooldown
+		// a small cooldown to avoid toggle spam
 		document.getElementById("audioonly").disabled = true;
 		setTimeout(function(){
 			document.getElementById("audioonly").disabled = false;
@@ -330,7 +330,7 @@ async function monitorForClicks() {
 
 // monitoring for touches on our mobile button
 async function monitorForClicksMobile() {
-	// monitor our mobile div
+	// monitor our mobile button
 	document.getElementById('audioonlym').addEventListener("click", function (e) {
 		// set isAudioEnabledfromStorage and save it to storage
 		if (isAudioEnabledfromStorage === 1) {
@@ -341,7 +341,7 @@ async function monitorForClicksMobile() {
 			storEnableAudioOnly();
 		}
 		
-		// set the audioonlym div to enabled/disabled
+		// set the audioonlym button to enabled/disabled
 		if (this.getAttribute("aria-pressed") == "false") {
 			this.setAttribute("style", "background-color:#F24033");
 			this.setAttribute("aria-pressed", "true");
@@ -356,7 +356,7 @@ async function monitorForClicksMobile() {
 			playVideoWithAudio();
 		}
 		
-		// cooldown
+		// a small cooldown to avoid button spamming
 		document.getElementById("audioonlym").disabled = true;
 		setTimeout(function(){
 			document.getElementById("audioonlym").disabled = false;
@@ -377,9 +377,8 @@ document.addEventListener("DOMContentLoaded", function(){
 // looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
 // for chrome navigation.addEventListener seems a better solution
 // document title seems to be more consistent than document.location.href but still not good enough, yt changes the document title every time it changes to a new video
-// unless the video has the exact same title name? and you get a notification
+// unless the video has the exact same title name? and/or you get a notification
 window.addEventListener("load", () => {
-  //let oldHref = document.title;
   let oldHref = "";
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
@@ -391,13 +390,12 @@ window.addEventListener("load", () => {
 			urlChanged();
 			// try to create our div if not already
 			createAudioDiv();
-			//
     } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
 			console.log("URL changed, main page!");
 			// clean old title
 			oldHref = "";
 			// although not playing anything on the main site we need to request a url change
-			// just in case the user goes back and forth between the main site and the same video
+			// just in case the user goes back and forth between the main site and the last video
 			urlChanged();
 			// change the mobile button visibility while on the main site
 			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
@@ -408,35 +406,6 @@ window.addEventListener("load", () => {
   });
   observer.observe(body, { childList: true, subtree: true });
 });
-
-/*
-window.addEventListener("load", () => {
-  //let oldHref = document.title;
-  let oldHref = "";
-  const body = document.querySelector("body");
-  const observer = new MutationObserver(mutations => {
-		if (oldHref !== document.title && document.location.href.includes('.youtube.com/watch?')) {
-			oldHref = document.title;
-      // on changes
-      console.log("URL changed, not on main page: " + oldHref);
-			// send the URL to service worker
-			urlChanged();
-			// try to create our div if not already
-			createAudioDiv();
-			//
-    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
-			console.log("URL changed, main page!");
-			// clean old title
-			oldHref = "";
-			// although not playing anything on the main site we need to request a url change
-			// just in case the user goes back and forth between the main site and the same video
-			urlChanged();
-			// maybe check here for the mini player
-		}
-  });
-  observer.observe(body, { childList: true, subtree: true });
-}); 
-*/
 
 // attempt to fix some media sources
 async function redirectCases(url) {
@@ -477,8 +446,9 @@ chrome.runtime.onMessage.addListener((message) => {
 	if (message.weneedpermissions) {
 		console.log("we need permissions!");
 		if (document.location.href.includes('.youtube.com/')) {
-			//alert("Some permissions were removed from the\nTube Audio Options+ extension.\nIt can't work without them.\nConsider granting them manually if you need\nthe extension working.");
+			// I still haven't decided on how to do this, I rather not be intrusive to the user
 			// decide what to do if we don't have the required permissions
+			//alert("Some permissions were removed from the\nTube Audio Options+ extension.\nIt can't work without them.\nConsider granting them manually if you need\nthe extension working.");
 		}
 	}
 });
