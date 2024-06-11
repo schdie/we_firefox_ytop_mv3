@@ -1,60 +1,13 @@
 'use strict';
 
 /*
+old message:
 I tried several approaches and I feel this is the best option when using the website.
 It is not the cleanest but requires the least amount of code.
 We don't have to deal with ciphers and it's probably the most resistant to YT changes.
+new message:
+About that "best option" I think google has other ideas...
 */
-
-// original logic code from https://github.com/craftwar/youtube-audio
-browser.runtime.onMessage.addListener(
-	(request, sender, sendResponse) => {
-		if (request.url) {
-			console.log("main function, document.location.href : " + document.location.href);
-			// requested source URL
-			const url = request.url;
-			console.log("main function, url: " + url);
-			// requested current URL
-			const curl = request.curl;
-			console.log("main function, curl: " + curl);
-			// save the audio only source in case of a switch
-			recoveredAudioSource = url;
-			
-			// check the url for special cases
-			redirectCases(url);
-			
-			const videoElement = document.getElementsByTagName('video')[0];
-					
-			// save the video+audio source in case of a switch
-			if (videoElement.src.indexOf("blob:") >= 0) {
-				originalVideoSource = videoElement.src;
-			}
-
-			// try to play the new source
-			if (videoElement.src != url && isAudioEnabledfromStorage === 1) {
-				// https://developer.chrome.com/blog/play-request-was-interrupted/
-				let playPromise = videoElement.play();
-
-				if (playPromise !== undefined) {
-						playPromise.then(function() {
-							videoElement.src = url;
-							setCurrentTime();
-							videoElement.play();
-							console.log("main function, Play promise succeed!");
-						}).catch(function(error) {
-							console.log("main function, Play promise failed: " + error);
-							// we are just going to brute force or way because youtube doesn't play nice sometimes
-							videoElement.src = url;
-							setCurrentTime();
-							videoElement.play();
-						});
-				}
-			}
-		}
-	}
-);
-
-browser.runtime.sendMessage('1');
 
 // global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
@@ -71,8 +24,6 @@ function urlChanged(e) {
     currloc: document.location.href,
   });
 }
-
-urlChanged();
 
 // get the stored value of audioonly and set the isAudioEnabledfromStorage var
 async function getStoredValues() {
@@ -104,23 +55,19 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 function playAudioOnly() {
-	console.log("playAudioOnly called: " + recoveredAudioSource);
-	const videoElement = document.getElementsByTagName('video')[0];
-
-	// on rare ocassions recoveredAudioSource is null
-	if (recoveredAudioSource) {
-		// check the url for special cases
-		redirectCases(recoveredAudioSource);
-		
-		videoElement.src = recoveredAudioSource;
-		setCurrentTime();
-		videoElement.play();
-	} else {
-		// let's try to fix it
-		console.log("recovered audio was null: " + recoveredAudioSource);
-		urlChanged();
-	}
-	
+	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
+		console.log("playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
+		const videoElement = document.getElementsByTagName('video')[0];
+		if (recoveredAudioSource) { // on rare ocassions recoveredAudioSource is null
+			//redirectCases(recoveredAudioSource); // check the url for special cases
+			
+			videoElement.src = recoveredAudioSource;
+			setCurrentTime();
+			videoElement.play();
+		} else { // let's try to fix it
+			console.log("recovered audio was null: " + recoveredAudioSource);
+		}
+	}	
 }
 
 // function to play the original stream with video+audio
@@ -366,39 +313,51 @@ async function monitorForClicksMobile() {
 
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
-	// if it's a video page
-	if (document.location.href.includes('.youtube.com/watch?')) {
-		setUrl();
-		urlChanged();
-		createAudioDiv();
-		console.log("DOMContentLoaded, '.youtube.com/watch?': " + document.location.href);
+	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
+		console.log("TAO calling only once: getbasejs and createAudioDiv");
+		getbasejs(); // try to get the base.js for later if needed
+		createAudioDiv(); // create the div for the user interface
 	}
 });
+
+// find the current base.js in use
+async function getbasejs() {
+	while(!document.getElementById('movie_player')) { // patience
+		await new Promise(r => requestAnimationFrame(r));
+	}
+	
+	const basejsurl = document.getElementById('movie_player').getAttribute("data-version");
+	if (basejsurl) {
+		console.log("TAO base.js found: ", basejsurl);
+	} else {
+		console.log("TAO base.js not found");
+	}
+}
 
 // looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
 // for chrome navigation.addEventListener seems a better solution
 // document title seems to be more consistent than document.location.href but still not good enough, yt changes the document title every time it changes to a new video
 // unless the video has the exact same title name? and/or you get a notification
 window.addEventListener("load", () => {
-  let oldHref = "";
+  let oldHref;
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
 		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
+			
 			oldHref = document.location.href;
       // on changes
-      setUrl();
-      //console.log("URL changed, not on main page: " + oldHref);
-			// send the URL to service worker
-			urlChanged();
+			setUrl();
+      console.log("TAO (url change), not on main page: " + oldHref);
 			// try to create our div if not already
 			createAudioDiv();
     } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
+    //} else if (document.location.href !== '.youtube.com/watch?') {
 			//console.log("URL changed, main page!");
 			// clean old title
 			oldHref = "";
 			// although not playing anything on the main site we need to request a url change
 			// just in case the user goes back and forth between the main site and the last video
-			urlChanged();
+			
 			// change the mobile button visibility while on the main site
 			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
 				document.getElementById('audioonlym').style.display = "none";
@@ -455,39 +414,17 @@ chrome.runtime.onMessage.addListener((message) => {
 	}
 });
 
-// disable page-focus on mobile firefox to allow background play
-// original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
-// https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
-
-// visibilitychange events are captured and stopped 
-document.addEventListener("visibilitychange", function(e) {
-	e.stopImmediatePropagation();
-}, true);
-
-// document.visibilityState always returns false
-Object.defineProperty(Document.prototype, "hidden", {
-	get: function hidden() {
-		return false;
-	},
-	enumerable: true,
-	configurable: true
-});
-
-// document.visibilityState always returns "visible"
-Object.defineProperty(Document.prototype, "visibilityState", {
-	get: function visibilityState() {
-		return "visible";
-	},
-	enumerable: true,
-	configurable: true
-});
-
 // thanks to https://stackoverflow.com/questions/8690255/how-to-play-only-the-audio-of-a-youtube-video-using-html-5/45375023#45375023 for the idea
 var as;
 var asc;
 var vs;
 
 function setUrl() {
+	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
+ 
+	const videoElement = document.getElementsByTagName('video')[0]; 
+	if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src;	} // save the original video+audio source
+	
 	as = {},  // audio streams
 	asc = {}, // ciphered audio streams 
 	vs = {},  // video streams
@@ -506,8 +443,8 @@ function setUrl() {
 
 				var matches = regex.exec(data);
 				var data = matches && matches.length > 1 ? JSON.parse(matches[1]) : false;
-				console.log("data:");
-				console.log(data);
+				//console.log("data:");
+				//console.log(data);
 
 				var streams = [],
 				result = {};
@@ -525,11 +462,7 @@ function setUrl() {
 				} else {
 					return false;
 				}
-				
-				// get base.js
-				var basejsurl = document.querySelectorAll("[href*='base.js']");
-				console.log("TAO base.js url: ", basejsurl[0].href);
-				
+	
 				// get current page video id
 				let vidID;
 				if (data.videoDetails.videoId) {
@@ -555,14 +488,14 @@ function setUrl() {
 					return el.mimeType.startsWith('audio');
 				});
 				
-				console.log(audioStreams);
+				//console.log(audioStreams); // array with the available audio streams
 				
 				// video+audio only streams array
 				var videoStreams = streams.filter(function (el) {
 					return el.mimeType.includes(',');
 				});
 
-				console.log(videoStreams);
+				//console.log(videoStreams); // array with the available video streams
 	
 				let audioid;
 	
@@ -668,10 +601,41 @@ function setUrl() {
 					playAudioOnly(); // play the audio source
 				}				
 			})
+		} else {
+			console.log("something wrong with fetch...");
 		}
 	});
 }
 
+// disable page-focus on mobile firefox to allow background play
+// original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
+// https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
+
+// visibilitychange events are captured and stopped 
+document.addEventListener("visibilitychange", function(e) {
+	e.stopImmediatePropagation();
+}, true);
+
+// document.visibilityState always returns false
+Object.defineProperty(Document.prototype, "hidden", {
+	get: function hidden() {
+		return false;
+	},
+	enumerable: true,
+	configurable: true
+});
+
+// document.visibilityState always returns "visible"
+Object.defineProperty(Document.prototype, "visibilityState", {
+	get: function visibilityState() {
+		return "visible";
+	},
+	enumerable: true,
+	configurable: true
+});
+
+
+//--- to remove ---
 // https://www.youtube.com/s/player/4fc7f9fa/player_ias.vflset/en_US/base.js
 function xPa (a) {
     a = a.split("");
