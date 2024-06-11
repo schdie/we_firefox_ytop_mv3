@@ -386,6 +386,7 @@ window.addEventListener("load", () => {
 		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
 			oldHref = document.location.href;
       // on changes
+      setUrl();
       //console.log("URL changed, not on main page: " + oldHref);
 			// send the URL to service worker
 			urlChanged();
@@ -481,16 +482,15 @@ Object.defineProperty(Document.prototype, "visibilityState", {
 	configurable: true
 });
 
+// thanks to https://stackoverflow.com/questions/8690255/how-to-play-only-the-audio-of-a-youtube-video-using-html-5/45375023#45375023 for the idea
 var as;
+var asc;
 var vs;
 
-// thanks to https://stackoverflow.com/questions/8690255/how-to-play-only-the-audio-of-a-youtube-video-using-html-5/45375023#45375023 for the idea
-// less taxing, most likely to get a viable URL for playback
-function setUrl(audio, video) {
-	// audio streams
-	as = {},
-	// video streams
-	vs = {},
+function setUrl() {
+	as = {},  // audio streams
+	asc = {}, // ciphered audio streams 
+	vs = {},  // video streams
 
 	fetch(document.location.href).then(response => {
 		if (response.ok) {
@@ -619,46 +619,60 @@ function setUrl(audio, video) {
 							//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
 							//console.log("TAO audio stream 139 url: " + stream.url);
 							break;
+						case 171: // aac 48 Kbps
+							audioid = '171';
+							console.log("TAO audio stream 171 available, stream.url: ", stream.url);
+							//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
+							//console.log("TAO audio stream 139 url: " + stream.url);
+							break;
 						}
-						if (audioid) as[audioid] = stream.signatureCipher;
+						//console.log("TAO stream.signatureCipher " + stream.signatureCipher);
+						if (audioid) as[audioid] = stream.url;
+						if (audioid) asc[audioid] = stream.signatureCipher;
 				});
 				
 				// some ids are throttled, change as needed
-				let audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'];
-				let cipherurl = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'];
-				console.log("TAO cipherurl " + cipherurl);
+				let audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'] || as['171'];
+				let cipherurl = asc['258'] || asc['256'] || asc['251'] || asc['250'] || asc['249'] || asc['141'] || asc['140'] || asc['139'] || asc['171'];
+				//console.log("TAO audioURL " + audioURL);
+				//console.log("TAO cipherurl " + cipherurl);
 				
-				
-				// lets split signatureCipher
-				const splitedcipherurl = cipherurl.split('&');
-				let signaturecipher = splitedcipherurl[0].split('=').pop();
-				signaturecipher = decodeURIComponent(signaturecipher);
-				console.log("TAO signatureCipher s: ", splitedcipherurl[0].split('=').pop());
-				let signatureurl = splitedcipherurl[2].split('=').pop();
-				console.log("TAO signatureCipher url: ", splitedcipherurl[2].split('=').pop());
-				
-				// decrypt the signature
-				let decodedsig;
-				decodedsig = xPa(signaturecipher);
-				console.log("TAO signatureCipher decrypted s: ", decodedsig);
-				
-				// generate final url
-				let audiodecryptedurl = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
-				console.log("TAO signatureCipher decrypted url: ", audiodecryptedurl);
-				//console.log(decodeURIComponent(signatureurl));
-				
-				const videoElement = document.getElementsByTagName('video')[0];				
-				videoElement.src = audiodecryptedurl;
-				// sometimes the audioURL returns 403
-				// if true restart the function until it doesn't
-				// setUrl(0, 1);
-				// return;
-				
+				if ((audioURL) && (!cipherurl)) { // regular audio stream
+					console.log("TAO using regular audio only stream");
+					console.log("TAO audio-only url: ", audioURL);
+					recoveredAudioSource = audioURL; // making the audio source ready
+					playAudioOnly(); // play the audio source
+					
+				} else if ((!audioURL) && (cipherurl)) { // ciphered stream
+					console.log("TAO using ciphered audio only stream");
+					
+					// split the signatureCipher
+					const splitedcipherurl = cipherurl.split('&');
+					let signaturecipher = splitedcipherurl[0].split('=').pop();
+					signaturecipher = decodeURIComponent(signaturecipher);
+					console.log("TAO signatureCipher s: ", splitedcipherurl[0].split('=').pop());
+					let signatureurl = splitedcipherurl[2].split('=').pop();
+					console.log("TAO signatureCipher url: ", splitedcipherurl[2].split('=').pop());
+					
+					// decrypt the signatureCipher
+					let decodedsig;
+					//decodedsig = xPa(signaturecipher);
+					decodedsig = APa(signaturecipher);
+					console.log("TAO signatureCipher decrypted s: ", decodedsig);
+					
+					// generate final url
+					let audioURLciphered = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
+					console.log("TAO audio-only ciphered url: ", audioURLciphered);
+					//console.log(decodeURIComponent(signatureurl));
+					recoveredAudioSource = audioURLciphered; // making the audio source ready
+					playAudioOnly(); // play the audio source
+				}				
 			})
 		}
 	});
 }
 
+// https://www.youtube.com/s/player/4fc7f9fa/player_ias.vflset/en_US/base.js
 function xPa (a) {
     a = a.split("");
     WO.xX(a, 62);
@@ -667,10 +681,6 @@ function xPa (a) {
     WO.xX(a, 1);
     WO.FW(a, 26);
     WO.xX(a, 11);
-    
-    a.join("");
-    //let decodedsig2 = a.join("");
-    //console.log("TAO decrypted s: ", decodedsig2);
     return a.join("") 
 };
 
@@ -688,3 +698,30 @@ var WO = {
     }
 };
 
+// https://www.youtube.com/s/player/4fc7f9fa/player_ias.vflset/en_US/base.js
+function APa (a) {
+    a = a.split("");
+    TO.nE(a, 2);
+    TO.Ud(a, 46);
+    TO.te(a, 62);
+    TO.nE(a, 1);
+    TO.te(a, 61);
+    TO.Ud(a, 40);
+    TO.te(a, 65);
+    TO.Ud(a, 54);
+    return a.join("")
+};
+
+var TO = {
+    nE: function(a, b) {
+        a.splice(0, b)
+    },
+    te: function(a, b) {
+        var c = a[0];
+        a[0] = a[b % a.length];
+        a[b % a.length] = c
+    },
+    Ud: function(a) {
+        a.reverse()
+    }
+}
