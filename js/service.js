@@ -91,7 +91,7 @@ browser.runtime.onMessage.addListener(
 			oldURL = "";
 		}
 		currentURL = request.currloc;
-		//console.log("requested currentURL: " + request.currloc);
+		console.log("requested currentURL: " + request.currloc);
 	}
 );
 
@@ -111,31 +111,35 @@ checkAudioUrls();
 function processRequest(details) {
 	// youtube.com/embed/ is usally for ads, you don't want to even hear the ad right?
 	if (details.originUrl.includes("https://www.youtube.com/embed/") || details.originUrl.includes(" https://accounts.youtube.com/RotateCookiesPage")) {
-		//console.log("bailing! details.originUrl.includes: " + details.originUrl);
+		console.log("bailing! details.originUrl.includes: " + details.originUrl);
 		return;
 	}
 	
 	// reviewing code I found this so funny I'm leaving it here (:
-	if (!currentURL !== oldURL) {
+	//if (!currentURL !== oldURL) {
 		//console.log("currentURL = oldURL");
-	}
+	//}
 	// we are forcing itag 251, with a little more code we could choose from 139/140/141/171/172/249/250/251/256/258
 	// 251 is probably the safest bet and has the best quality
-	if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {
+	//if (details.url.includes('mime=audio') && details.url.includes('itag=251') && !details.url.includes('live=1') && (currentURL) && (currentURL !== oldURL)) {
+	if (details.url.includes('base.js') && (currentURL) && (!details.url.includes('/api/stats/'))) {
 		// reverse parameter order (same as url parameter traversal order)
 		const parametersToBeRemoved = ['ump', 'rbuf=', 'rn=', 'range='];		
 		const audioURL = removeURLParameters(details.url, parametersToBeRemoved);
 		
+		console.log("-------------------------");
+		console.log("currentURL: " + currentURL);
+		console.log("currentURL audio only url: " + audioURL);
+		console.log("-------------------------");	
+		
 		// we only care about videos
-		if (!currentURL.includes('.youtube.com/watch?')) {
-			//console.log("bailing! currentURL: " + currentURL);
+		//if (!currentURL.includes('.youtube.com/watch?')) {
+		if (currentURL.includes('.youtube.com/watch?')) {
+			console.log("bailing! currentURL: " + currentURL);
 			return;
 		}
 		
-		//console.log("-------------------------");
-		//console.log("currentURL: " + currentURL);
-		//console.log("currentURL audio only url: " + audioURL);
-		//console.log("-------------------------");	
+
 		
 		browser.tabs.sendMessage(details.tabId, {url: audioURL, curl: currentURL});
 
@@ -145,7 +149,7 @@ function processRequest(details) {
 
 // used to remove parameters from the audio only url
 function removeURLParameters(url, parametersToBeRemoved) {
-	//console.log("removeURLParameters executed, original url: " + url);
+	console.log("removeURLParameters executed, original url: " + url);
 	const urlparts = url.split('?');
 	if (urlparts.length >= 2) {
 		let pars = urlparts[1].split('&');
@@ -161,6 +165,6 @@ function removeURLParameters(url, parametersToBeRemoved) {
 		}
 		url = `${urlparts[0]}?${pars.join('&')}`;
 	}
-	//console.log("removeURLParameters executed, new url: " + url);
+	console.log("removeURLParameters executed, new url: " + url);
 	return url;
 }
