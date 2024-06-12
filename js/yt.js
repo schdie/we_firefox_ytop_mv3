@@ -6,8 +6,11 @@ I tried several approaches and I feel this is the best option when using the web
 It is not the cleanest but requires the least amount of code.
 We don't have to deal with ciphers and it's probably the most resistant to YT changes.
 new message:
-About that "best option" I think google has other ideas...
+About that "best option" comment I think google had other ideas all along...
 */
+
+// global scope, used to check if we already got the base.js file
+var wasBasedotjsRetrieved;
 
 // global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
@@ -30,11 +33,11 @@ async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
 
   if (audioonly === 1) {
-		console.log("startup: audioonly is enabled.");
+		console.log("TAO startup: audioonly is enabled.");
 		isAudioEnabledfromStorage = 1;
 	} else {
 		isAudioEnabledfromStorage = 0;
-		console.log("startup: audioonly is disabled.");
+		console.log("TAO startup: audioonly is disabled.");
 	}
 }
 
@@ -56,23 +59,21 @@ async function storDisableAudioOnly() {
 // function to play only audio
 function playAudioOnly() {
 	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
-		console.log("playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
+		console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
 		const videoElement = document.getElementsByTagName('video')[0];
 		if (recoveredAudioSource) { // on rare ocassions recoveredAudioSource is null
-			//redirectCases(recoveredAudioSource); // check the url for special cases
-			
 			videoElement.src = recoveredAudioSource;
 			setCurrentTime();
 			videoElement.play();
 		} else { // let's try to fix it
-			console.log("recovered audio was null: " + recoveredAudioSource);
+			console.log("TAO recovered audio was null: " + recoveredAudioSource);
 		}
 	}	
 }
 
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
-	console.log("playVideoWithAudio called: " + originalVideoSource);
+	console.log("TAO playVideoWithAudio called: " + originalVideoSource);
 	const videoElement = document.getElementsByTagName('video')[0];
 	videoElement.src = originalVideoSource;
 	setCurrentTime();
@@ -230,8 +231,12 @@ async function monitorForClicks() {
 		// set the audioonly div to enabled/disabled
 		if (this.getAttribute("aria-pressed") == "false") {
 			this.setAttribute("aria-pressed", "true");
-			// and request to play audio only
-			playAudioOnly();
+			if (recoveredAudioSource) {
+				playAudioOnly(); // play the saved audio source
+			} else {
+				setUrl(); // find the audio only streams
+			}
+			
 		} else {
 			this.setAttribute("aria-pressed", "false");
 			// or request to play video+audio
@@ -322,13 +327,29 @@ document.addEventListener("DOMContentLoaded", function(){
 
 // find the current base.js in use
 async function getbasejs() {
+	if (wasBasedotjsRetrieved) { console.log("TAO base.js already retrieved, bailing."); return }; // proceed only if base.js was not yet retrieved
+	
+	// after the movie_player has loaded...
 	while(!document.getElementById('movie_player')) { // patience
 		await new Promise(r => requestAnimationFrame(r));
 	}
 	
-	const basejsurl = document.getElementById('movie_player').getAttribute("data-version");
+	// ...we get the base.js url
+	const basejsurl = "https://www.youtube.com" + document.getElementById('movie_player').getAttribute("data-version");
 	if (basejsurl) {
 		console.log("TAO base.js found: ", basejsurl);
+		
+		//fetch(basejsurl, {headers: {Range: `bytes=1990-1999`}}).then(response => {
+		fetch(basejsurl).then(response => { // get the file
+			if (response.ok) {
+				response.text().then(data => {
+					wasBasedotjsRetrieved = data; // save it, no need to retrieve it again for the session
+					console.log("TAO retrieved base.js: ", data);
+					// retrieve the cipher function
+
+				})
+			}
+		});
 	} else {
 		console.log("TAO base.js not found");
 	}
@@ -343,21 +364,17 @@ window.addEventListener("load", () => {
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
 		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
-			
-			oldHref = document.location.href;
+			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
+			oldHref = document.location.href; // what's new is old
       // on changes
-			setUrl();
+      getbasejs(); // get the base.js file
+			setUrl(); // retrieve the audio streams
       console.log("TAO (url change), not on main page: " + oldHref);
+      
 			// try to create our div if not already
 			createAudioDiv();
     } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
-    //} else if (document.location.href !== '.youtube.com/watch?') {
-			//console.log("URL changed, main page!");
-			// clean old title
-			oldHref = "";
-			// although not playing anything on the main site we need to request a url change
-			// just in case the user goes back and forth between the main site and the last video
-			
+			oldHref = ""; // clean old title
 			// change the mobile button visibility while on the main site
 			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
 				document.getElementById('audioonlym').style.display = "none";
@@ -367,40 +384,6 @@ window.addEventListener("load", () => {
   });
   observer.observe(body, { childList: true, subtree: true });
 });
-
-// attempt to fix some media sources
-async function redirectCases(url) {
-	// no need to grab the whole thing, this is important because most of the times this could be a large-ish file
-	fetch(url, {headers: {Range: `bytes=1990-1999`}}).then(response => {
-		if (response.ok) {
-			response.text().then(data => {
-				console.log("redirectCases: received data (truncated): " + data);
-				// if this is true we need the new data as the actual source to play
-				if (data.indexOf("https://") >= 0) {
-					console.log("redirectCases, Attempt to fix the source url: " + data);
-					
-					// this may create a race condition in some rare circunstances
-					const videoElement = document.getElementsByTagName('video')[0];
-					let playPromise = videoElement.play();
-
-					if (playPromise !== undefined && isAudioEnabledfromStorage === 1) {
-							playPromise.then(function() {
-								videoElement.src = data;
-								setCurrentTime();
-								videoElement.play();
-								console.log("redirectCases, Attempt to fix Play promise succeed!");
-							}).catch(function(error) {
-								console.log("redirectCases, Attempt to fix Play promise failed: " + error);
-								videoElement.src = data;
-								setCurrentTime();
-								videoElement.play();
-							});
-					}
-				}
-			})
-		}
-	});
-}
 
 // if permissions are removed we politely remind the user
 chrome.runtime.onMessage.addListener((message) => {
@@ -423,7 +406,8 @@ function setUrl() {
 	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
  
 	const videoElement = document.getElementsByTagName('video')[0]; 
-	if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src;	} // save the original video+audio source
+	if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); } // save the original video+audio source
+	
 	
 	as = {},  // audio streams
 	asc = {}, // ciphered audio streams 
@@ -575,6 +559,14 @@ function setUrl() {
 					console.log("TAO audio-only url: ", audioURL);
 					recoveredAudioSource = audioURL; // making the audio source ready
 					playAudioOnly(); // play the audio source
+					// unless we fix the n parameter we have to do this check
+					fetch(audioURL, { method: 'HEAD' }).then((response) => {
+						if (!response.ok && response.status === 403) {
+								console.log("TAO audio stream response, rebooting... ", response.status);
+								setUrl(); // reboot
+								return;
+						}    
+					});
 					
 				} else if ((!audioURL) && (cipherurl)) { // ciphered stream
 					console.log("TAO using ciphered audio only stream");
@@ -599,10 +591,18 @@ function setUrl() {
 					//console.log(decodeURIComponent(signatureurl));
 					recoveredAudioSource = audioURLciphered; // making the audio source ready
 					playAudioOnly(); // play the audio source
+					// unless we fix the n parameter we have to do this check
+					fetch(audioURLciphered, { method: 'HEAD' }).then((response) => {
+						if (!response.ok && response.status === 403) {
+								console.log("TAO audio stream ciphered response, rebooting... ", response.status);
+								setUrl(); // reboot
+								return;
+						}    
+					});
 				}				
 			})
 		} else {
-			console.log("something wrong with fetch...");
+			console.log("something's wrong with fetch...");
 		}
 	});
 }
@@ -636,7 +636,7 @@ Object.defineProperty(Document.prototype, "visibilityState", {
 
 
 //--- to remove ---
-// https://www.youtube.com/s/player/4fc7f9fa/player_ias.vflset/en_US/base.js
+// https://www.youtube.com/s/player/dee49cfa/player_ias.vflset/en_US/base.js
 function xPa (a) {
     a = a.split("");
     WO.xX(a, 62);

@@ -79,3 +79,5 @@ async function setDefaultValues() {
 		await browser.storage.local.set({audioonly: 0});
 	}
 }
+
+// lets fetch base.js
