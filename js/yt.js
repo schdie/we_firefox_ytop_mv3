@@ -1,4 +1,4 @@
-'use strict';
+//'use strict';
 
 /*
 old message:
@@ -11,6 +11,20 @@ About that "best option" comment I think google had other ideas all along...
 
 // global scope, used to check if we already got the base.js file
 var wasBasedotjsRetrieved;
+
+// global scope, list of vars for the signatureCipher
+var decodedloopsize;
+var decodedvarb = [];
+var decodedchoice = [];
+
+var decodedsplice;
+var decodedswap;
+var decodedreverse;
+
+var decodedsig;
+
+// decrypt the signatureCipher
+var basejscipherfunction;
 
 // global scope, used to check if audioonly is enabled or not "currently"
 var isAudioEnabledfromStorage;
@@ -125,7 +139,7 @@ async function createAudioDiv() {
 	
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly') || document.getElementById('audioonlym')) {
-		console.log("audioonly or audioonlym div already exists, bailing.");
+		console.log("TAO audioonly or audioonlym divs already exist, bailing.");
 		// in case the mobile button is already loaded but not visible
 		if (document.getElementById('audioonlym')) {
 			document.getElementById('audioonlym').style.display = "block";
@@ -318,9 +332,10 @@ async function monitorForClicksMobile() {
 
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
+	getbasejs(); // try to get the base.js for later if needed
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
 		console.log("TAO calling only once: getbasejs and createAudioDiv");
-		getbasejs(); // try to get the base.js for later if needed
+		
 		createAudioDiv(); // create the div for the user interface
 	}
 });
@@ -337,16 +352,40 @@ async function getbasejs() {
 	// ...we get the base.js url
 	const basejsurl = "https://www.youtube.com" + document.getElementById('movie_player').getAttribute("data-version");
 	if (basejsurl) {
-		console.log("TAO base.js found: ", basejsurl);
+		console.log("TAO CIPHER base.js found: ", basejsurl);
 		
 		//fetch(basejsurl, {headers: {Range: `bytes=1990-1999`}}).then(response => {
 		fetch(basejsurl).then(response => { // get the file
 			if (response.ok) {
 				response.text().then(data => {
 					wasBasedotjsRetrieved = data; // save it, no need to retrieve it again for the session
-					console.log("TAO retrieved base.js: ", data);
+					
+					// base.js aliases
+					decodedreverse = data.split(':function(a){a.reverse()')[0].slice(-2); // reverse alias
+					console.log("function find testing!!", decodedreverse);
+					decodedswap = data.split(':function(a,b){var c=a[')[0].slice(-2); // swap alias
+					console.log("function find testing!!", decodedswap);
+					decodedsplice = data.split(':function(a,b){a.splice')[0].slice(-2); // splice alias
+					console.log("function find testing!!", decodedsplice);
+					
 					// retrieve the cipher function
-
+					let lines = data.split('\n');
+					lines.forEach(l => {
+						if (l.indexOf('a.split("");') > -1) { // retrieve the current signatureCipher function
+							console.log('TAO CIPHER main function splited: ', l.slice(30).split('return')[0]);
+							decodedloopsize = l.slice(30).split('return')[0];
+							decodedloopsize = decodedloopsize.split(";");
+							
+							// retrieve the b parameter and check if it's splice
+							for (let i = 0; i < decodedloopsize.length -1; i++) {
+								decodedvarb[i] = decodedloopsize[i].split(',').pop().slice(0, -1); // save parameter b
+								console.log("TAO CIPHER parameter b" + [i] + ": ", decodedvarb[i]);
+								
+								decodedchoice[i] = decodedloopsize[i].split('(')[0].split('.')[1]; // save function alias
+								//console.log("function alias l"+[i]+": ", decodedchoice[i]);
+							} 
+						}
+					});
 				})
 			}
 		});
@@ -367,7 +406,7 @@ window.addEventListener("load", () => {
 			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
 			oldHref = document.location.href; // what's new is old
       // on changes
-      getbasejs(); // get the base.js file
+      //getbasejs(); // get the base.js file
 			setUrl(); // retrieve the audio streams
       console.log("TAO (url change), not on main page: " + oldHref);
       
@@ -573,16 +612,34 @@ function setUrl() {
 					
 					// split the signatureCipher
 					const splitedcipherurl = cipherurl.split('&');
+
 					let signaturecipher = splitedcipherurl[0].split('=').pop();
+
 					signaturecipher = decodeURIComponent(signaturecipher);
-					console.log("TAO signatureCipher s: ", splitedcipherurl[0].split('=').pop());
+					console.log("TAO signatureCipher s: ", signaturecipher);
 					let signatureurl = splitedcipherurl[2].split('=').pop();
-					console.log("TAO signatureCipher url: ", splitedcipherurl[2].split('=').pop());
+					console.log("TAO signatureCipher url: ", signatureurl);
 					
-					// decrypt the signatureCipher
-					let decodedsig;
-					//decodedsig = xPa(signaturecipher);
-					decodedsig = APa(signaturecipher);
+					// without base.js we can't decode anything
+					if (!wasBasedotjsRetrieved || !decodedvarb) { // patience
+						setUrl(); // reboot
+					}
+					
+					decodedsig = signaturecipher.split(""); // split before the loop
+					for (let i = 0; i < decodedloopsize.length -1; i++) {
+						// what should we do?
+						if (decodedchoice[i] == decodedsplice) { // slice
+							cipherTools.spl(decodedsig, decodedvarb[i]);
+							console.log("TAOOOOOOOOO SPLICE MATCH! ", decodedchoice[i], decodedsplice);
+						} else if (decodedchoice[i] == decodedswap) { // swap
+							cipherTools.swa(decodedsig, decodedvarb[i]);
+							console.log("TAOOOOOOOOO Swap MATCH! ", decodedchoice[i], decodedswap);
+						} else if (decodedchoice[i] == decodedreverse) { // reverse
+							cipherTools.rev(decodedsig, decodedvarb[i]);
+							console.log("TAOOOOOOOOO reverse MATCH! ", decodedchoice[i], decodedreverse);
+						}
+					}
+					decodedsig = decodedsig.join(""); // join after the loop
 					console.log("TAO signatureCipher decrypted s: ", decodedsig);
 					
 					// generate final url
@@ -595,7 +652,7 @@ function setUrl() {
 					fetch(audioURLciphered, { method: 'HEAD' }).then((response) => {
 						if (!response.ok && response.status === 403) {
 								console.log("TAO audio stream ciphered response, rebooting... ", response.status);
-								setUrl(); // reboot
+								//setUrl(); // reboot
 								return;
 						}    
 					});
@@ -634,58 +691,17 @@ Object.defineProperty(Document.prototype, "visibilityState", {
 	configurable: true
 });
 
-
-//--- to remove ---
-// https://www.youtube.com/s/player/dee49cfa/player_ias.vflset/en_US/base.js
-function xPa (a) {
-    a = a.split("");
-    WO.xX(a, 62);
-    WO.lp(a, 2);
-    WO.FW(a, 50);
-    WO.xX(a, 1);
-    WO.FW(a, 26);
-    WO.xX(a, 11);
-    return a.join("") 
-};
-
-var WO = {
-    lp: function(a, b) {
+// our cloned version of the yt cipherSignature
+var cipherTools = {
+    spl: function(a, b) {
         a.splice(0, b)
     },
-    FW: function(a) {
+    rev: function(a) {
         a.reverse()
     },
-    xX: function(a, b) {
+    swa: function(a, b) {
         var c = a[0];
         a[0] = a[b % a.length];
         a[b % a.length] = c
     }
 };
-
-// https://www.youtube.com/s/player/4fc7f9fa/player_ias.vflset/en_US/base.js
-function APa (a) {
-    a = a.split("");
-    TO.nE(a, 2);
-    TO.Ud(a, 46);
-    TO.te(a, 62);
-    TO.nE(a, 1);
-    TO.te(a, 61);
-    TO.Ud(a, 40);
-    TO.te(a, 65);
-    TO.Ud(a, 54);
-    return a.join("")
-};
-
-var TO = {
-    nE: function(a, b) {
-        a.splice(0, b)
-    },
-    te: function(a, b) {
-        var c = a[0];
-        a[0] = a[b % a.length];
-        a[b % a.length] = c
-    },
-    Ud: function(a) {
-        a.reverse()
-    }
-}
