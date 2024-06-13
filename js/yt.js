@@ -362,24 +362,24 @@ async function getbasejs() {
 					
 					// base.js aliases
 					decodedreverse = data.split(':function(a){a.reverse()')[0].slice(-2); // reverse alias
-					console.log("function find testing!!", decodedreverse);
+					//console.log("function find testing!!", decodedreverse);
 					decodedswap = data.split(':function(a,b){var c=a[')[0].slice(-2); // swap alias
-					console.log("function find testing!!", decodedswap);
+					//console.log("function find testing!!", decodedswap);
 					decodedsplice = data.split(':function(a,b){a.splice')[0].slice(-2); // splice alias
-					console.log("function find testing!!", decodedsplice);
+					//console.log("function find testing!!", decodedsplice);
 					
 					// retrieve the cipher function
 					let lines = data.split('\n');
 					lines.forEach(l => {
 						if (l.indexOf('a.split("");') > -1) { // retrieve the current signatureCipher function
-							console.log('TAO CIPHER main function splited: ', l.slice(30).split('return')[0]);
+							//console.log('TAO cipher main function splited: ', l.slice(30).split('return')[0]);
 							decodedloopsize = l.slice(30).split('return')[0];
 							decodedloopsize = decodedloopsize.split(";");
 							
 							// retrieve the b parameter and check if it's splice
 							for (let i = 0; i < decodedloopsize.length -1; i++) {
 								decodedvarb[i] = decodedloopsize[i].split(',').pop().slice(0, -1); // save parameter b
-								console.log("TAO CIPHER parameter b" + [i] + ": ", decodedvarb[i]);
+								//console.log("TAO cipher parameter b" + [i] + ": ", decodedvarb[i]);
 								
 								decodedchoice[i] = decodedloopsize[i].split('(')[0].split('.')[1]; // save function alias
 								//console.log("function alias l"+[i]+": ", decodedchoice[i]);
@@ -630,17 +630,17 @@ function setUrl() {
 						// what should we do?
 						if (decodedchoice[i] == decodedsplice) { // slice
 							cipherTools.spl(decodedsig, decodedvarb[i]);
-							console.log("TAOOOOOOOOO SPLICE MATCH! ", decodedchoice[i], decodedsplice);
+							//console.log("TAO cipher splice match! ", decodedchoice[i], decodedsplice);
 						} else if (decodedchoice[i] == decodedswap) { // swap
 							cipherTools.swa(decodedsig, decodedvarb[i]);
-							console.log("TAOOOOOOOOO Swap MATCH! ", decodedchoice[i], decodedswap);
+							//console.log("TAO cipher Swap match! ", decodedchoice[i], decodedswap);
 						} else if (decodedchoice[i] == decodedreverse) { // reverse
 							cipherTools.rev(decodedsig, decodedvarb[i]);
-							console.log("TAOOOOOOOOO reverse MATCH! ", decodedchoice[i], decodedreverse);
+							//console.log("TAO cipher reverse match! ", decodedchoice[i], decodedreverse);
 						}
 					}
 					decodedsig = decodedsig.join(""); // join after the loop
-					console.log("TAO signatureCipher decrypted s: ", decodedsig);
+					console.log("TAO signatureCipher s decrypted: ", decodedsig);
 					
 					// generate final url
 					let audioURLciphered = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
