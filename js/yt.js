@@ -734,6 +734,7 @@ async function postJSON(clientdata) {
 				'Accept': 'application/json',
         'Content-Type': "application/json",
         'Access-Control-Allow-Origin': '*',
+        'credentials': "same-origin",
       },
       body: JSON.stringify({ "context":
 							{ "client":
