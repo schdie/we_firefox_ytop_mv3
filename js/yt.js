@@ -9,6 +9,10 @@ new message:
 About that "best option" comment I think google had other ideas all along...
 */
 
+// global scope, API request
+var jsonPlayerInfo;
+var clientVideoid;
+
 // global scope, used to check if we already got the base.js file
 var wasBasedotjsRetrieved;
 
@@ -34,6 +38,21 @@ var originalVideoSource;
 
 // global scope, used to store the recovered audio source
 var recoveredAudioSource;
+
+// get the videoId
+function getVideoIdentifier() {
+	if (document.location.href.includes('.youtube.com/watch?v=')) {
+		clientVideoid = document.location.href.split('.youtube.com/watch?v=')[1];
+		if (clientVideoid.length === 11) { // just in case we are in playlist or something
+		} else {
+			clientVideoid = clientVideoid.split('&')[0];
+		}
+	console.log("TAO clientVideoid: ", clientVideoid);
+	//postJSON(clientdata);
+	}
+}
+
+getVideoIdentifier();
 
 // sending the current url to the service worker
 function urlChanged(e) {
@@ -71,7 +90,11 @@ async function storDisableAudioOnly() {
 }
 
 // function to play only audio
-function playAudioOnly() {
+async function playAudioOnly() {
+	while(!document.getElementById('movie_player')) { // patience
+		await new Promise(r => requestAnimationFrame(r));
+	}
+	
 	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
 		console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
 		const videoElement = document.getElementsByTagName('video')[0];
@@ -332,7 +355,8 @@ async function monitorForClicksMobile() {
 
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
-	getbasejs(); // try to get the base.js for later if needed
+	//getbasejs(); // try to get the base.js for later if needed
+	//postJSON(data);
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
 		console.log("TAO calling only once: getbasejs and createAudioDiv");
 		
@@ -362,17 +386,17 @@ async function getbasejs() {
 					
 					// base.js aliases
 					decodedreverse = data.split(':function(a){a.reverse()')[0].slice(-2); // reverse alias
-					//console.log("function find testing!!", decodedreverse);
+					console.log("function find testing!!", decodedreverse);
 					decodedswap = data.split(':function(a,b){var c=a[')[0].slice(-2); // swap alias
-					//console.log("function find testing!!", decodedswap);
+					console.log("function find testing!!", decodedswap);
 					decodedsplice = data.split(':function(a,b){a.splice')[0].slice(-2); // splice alias
-					//console.log("function find testing!!", decodedsplice);
+					console.log("function find testing!!", decodedsplice);
 					
 					// retrieve the cipher function
 					let lines = data.split('\n');
 					lines.forEach(l => {
 						if (l.indexOf('a.split("");') > -1) { // retrieve the current signatureCipher function
-							//console.log('TAO cipher main function splited: ', l.slice(30).split('return')[0]);
+							console.log('TAO cipher main function splited: ', l.slice(30).split('return')[0]);
 							decodedloopsize = l.slice(30).split('return')[0];
 							decodedloopsize = decodedloopsize.split(";");
 							
@@ -382,7 +406,7 @@ async function getbasejs() {
 								//console.log("TAO cipher parameter b" + [i] + ": ", decodedvarb[i]);
 								
 								decodedchoice[i] = decodedloopsize[i].split('(')[0].split('.')[1]; // save function alias
-								//console.log("function alias l"+[i]+": ", decodedchoice[i]);
+								console.log("function alias and parameter: "+[i]+": ", decodedchoice[i], decodedvarb[i]);
 							} 
 						}
 					});
@@ -407,7 +431,9 @@ window.addEventListener("load", () => {
 			oldHref = document.location.href; // what's new is old
       // on changes
       //getbasejs(); // get the base.js file
-			setUrl(); // retrieve the audio streams
+//			setUrl(); // retrieve the audio streams
+			getVideoIdentifier(); // on url change get the new videoId
+			postJSON(); // retrieve the video data
       console.log("TAO (url change), not on main page: " + oldHref);
       
 			// try to create our div if not already
@@ -441,227 +467,204 @@ var as;
 var asc;
 var vs;
 
-function setUrl() {
+async function setUrl() {
 	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
  
+	// we are so fast that we get a race condition where the audio gets replaced by the late video stream LMAO
 	const videoElement = document.getElementsByTagName('video')[0]; 
-	if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); } // save the original video+audio source
-	
+	if (videoElement.src.indexOf("blob:") >= 0) {
+		originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
+	} else {
+		//console.log("we are onto something");
+		while(videoElement.src.indexOf("blob:") < 0) { // patience
+			await new Promise(r => requestAnimationFrame(r));
+		}
+	}
 	
 	as = {},  // audio streams
 	asc = {}, // ciphered audio streams 
 	vs = {},  // video streams
 
-	fetch(document.location.href).then(response => {
-		if (response.ok) {
-			response.text().then(data => {
-
-				var regex = /(?:ytplayer\.config\s*=\s*|ytInitialPlayerResponse\s?=\s?)(.+?)(?:;var|;\(function|\)?;\s*if|;\s*if|;\s*ytplayer\.|;\s*<\/script)/gmsu;
-
-				data = data.split('window.getPageData')[0];
-				data = data.replace('ytInitialPlayerResponse = null', '');
-				data = data.replace('ytInitialPlayerResponse=window.ytInitialPlayerResponse', '');
-				data = data.replace('ytplayer.config={args:{raw_player_response:ytInitialPlayerResponse}};', '');
-				//data = data.replace('ytplayer.config={args:{raw_player_response.streamingData.adaptiveFormats:ytInitialPlayerResponse}};', '');
-
-				var matches = regex.exec(data);
-				var data = matches && matches.length > 1 ? JSON.parse(matches[1]) : false;
-				//console.log("data:");
-				//console.log(data);
-
-				var streams = [],
-				result = {};
+	streams = [],
+	result = {};
 				
-				// 
-				if (data.streamingData) {
-					// raw_player_response.streamingData.adaptiveFormats
-					if (data.streamingData.adaptiveFormats) {
-						streams = streams.concat(data.streamingData.adaptiveFormats);
-					}
-					// raw_player_response.streamingData.formats
-					if (data.streamingData.formats) {
-						streams = streams.concat(data.streamingData.formats);
-					}
-				} else {
-					return false;
-				}
-	
-				// get current page video id
-				let vidID;
-				if (data.videoDetails.videoId) {
-					vidID = data.videoDetails.videoId;
-					console.log("TAO video id: ", vidID);
-				}
-				
-				// get n parameter
-				let nParam;
-				if (data.streamingData.serverAbrStreamingUrl) {
-					let nParamurl = decodeURIComponent(data.streamingData.serverAbrStreamingUrl);
-					const urlParams = new URLSearchParams(nParamurl);
-					const nparamvalue = urlParams.get('n')
-
-					console.log("TAO n parameter: ", nparamvalue);
-				}	
-				
-				//console.log(streams);
-
-				// audio only streams array
-				var audioStreams = streams.filter(function (el) {
-					//return el.mimeType == 'audio/webm; codecs="opus"';
-					return el.mimeType.startsWith('audio');
-				});
-				
-				//console.log(audioStreams); // array with the available audio streams
-				
-				// video+audio only streams array
-				var videoStreams = streams.filter(function (el) {
-					return el.mimeType.includes(',');
-				});
-
-				//console.log(videoStreams); // array with the available video streams
-	
-				let audioid;
-	
-				audioStreams.forEach((stream, n) => {
-					var itag = stream.itag * 1;
-					audioid = false;
-					switch (itag) {
-						// audio
-						case 258: // aac 384 Kbps 5.1
-							audioid = '258';
-							console.log("TAO audio stream 258 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 258 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 258 url: " + stream.url);
-							break;
-						case 256: // aac 192 Kbps 5.1
-							audioid = '256';
-							console.log("TAO audio stream 256 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 256 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 256 url: " + stream.url);
-							break;
-						case 251: // webm (vbr) up to 160 Kbps (currently popular)
-							audioid = '251';
-							console.log("TAO audio stream 251 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 251 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 251 url: " + stream.url);
-							break;
-						case 250: // webm (vbr) ~70 Kbps (currently popular)
-							audioid = '250'; 
-							console.log("TAO audio stream 250 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 250 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 250 url: " + stream.url);
-							break;
-						case 249: // webm (vbr) ~50 Kbps (currently popular)
-							audioid = '249';
-							console.log("TAO audio stream 249 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 249 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 249 url: " + stream.url);
-							break;
-						case 141: // aac 256 Kbps
-							audioid = '141';
-							console.log("TAO audio stream 141 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 141 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 141 url: " + stream.url);
-							break;
-						case 140: // aac 48 Kbps (currently popular)
-							audioid = '140';
-							console.log("TAO audio stream 140 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 140 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 140 url: " + stream.url);
-							break;
-						case 139: // aac 48 Kbps
-							audioid = '139';
-							console.log("TAO audio stream 139 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 139 url: " + stream.url);
-							break;
-						case 171: // aac 48 Kbps
-							audioid = '171';
-							console.log("TAO audio stream 171 available, stream.url: ", stream.url);
-							//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
-							//console.log("TAO audio stream 139 url: " + stream.url);
-							break;
-						}
-						//console.log("TAO stream.signatureCipher " + stream.signatureCipher);
-						if (audioid) as[audioid] = stream.url;
-						if (audioid) asc[audioid] = stream.signatureCipher;
-				});
-				
-				// some ids are throttled, change as needed
-				let audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'] || as['171'];
-				let cipherurl = asc['258'] || asc['256'] || asc['251'] || asc['250'] || asc['249'] || asc['141'] || asc['140'] || asc['139'] || asc['171'];
-				//console.log("TAO audioURL " + audioURL);
-				//console.log("TAO cipherurl " + cipherurl);
-				
-				if ((audioURL) && (!cipherurl)) { // regular audio stream
-					console.log("TAO using regular audio only stream");
-					console.log("TAO audio-only url: ", audioURL);
-					recoveredAudioSource = audioURL; // making the audio source ready
-					playAudioOnly(); // play the audio source
-					// unless we fix the n parameter we have to do this check
-					fetch(audioURL, { method: 'HEAD' }).then((response) => {
-						if (!response.ok && response.status === 403) {
-								console.log("TAO audio stream response, rebooting... ", response.status);
-								setUrl(); // reboot
-								return;
-						}    
-					});
-					
-				} else if ((!audioURL) && (cipherurl)) { // ciphered stream
-					console.log("TAO using ciphered audio only stream");
-					
-					// split the signatureCipher
-					const splitedcipherurl = cipherurl.split('&');
-
-					let signaturecipher = splitedcipherurl[0].split('=').pop();
-
-					signaturecipher = decodeURIComponent(signaturecipher);
-					console.log("TAO signatureCipher s: ", signaturecipher);
-					let signatureurl = splitedcipherurl[2].split('=').pop();
-					console.log("TAO signatureCipher url: ", signatureurl);
-					
-					// without base.js we can't decode anything
-					if (!wasBasedotjsRetrieved || !decodedvarb) { // patience
-						setUrl(); // reboot
-					}
-					
-					decodedsig = signaturecipher.split(""); // split before the loop
-					for (let i = 0; i < decodedloopsize.length -1; i++) {
-						// what should we do?
-						if (decodedchoice[i] == decodedsplice) { // slice
-							cipherTools.spl(decodedsig, decodedvarb[i]);
-							//console.log("TAO cipher splice match! ", decodedchoice[i], decodedsplice);
-						} else if (decodedchoice[i] == decodedswap) { // swap
-							cipherTools.swa(decodedsig, decodedvarb[i]);
-							//console.log("TAO cipher Swap match! ", decodedchoice[i], decodedswap);
-						} else if (decodedchoice[i] == decodedreverse) { // reverse
-							cipherTools.rev(decodedsig, decodedvarb[i]);
-							//console.log("TAO cipher reverse match! ", decodedchoice[i], decodedreverse);
-						}
-					}
-					decodedsig = decodedsig.join(""); // join after the loop
-					console.log("TAO signatureCipher s decrypted: ", decodedsig);
-					
-					// generate final url
-					let audioURLciphered = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
-					console.log("TAO audio-only ciphered url: ", audioURLciphered);
-					//console.log(decodeURIComponent(signatureurl));
-					recoveredAudioSource = audioURLciphered; // making the audio source ready
-					playAudioOnly(); // play the audio source
-					// unless we fix the n parameter we have to do this check
-					fetch(audioURLciphered, { method: 'HEAD' }).then((response) => {
-						if (!response.ok && response.status === 403) {
-								console.log("TAO audio stream ciphered response, rebooting... ", response.status);
-								//setUrl(); // reboot
-								return;
-						}    
-					});
-				}				
-			})
-		} else {
-			console.log("something's wrong with fetch...");
+	// creating the streams from our data
+	if (jsonPlayerInfo.streamingData) {
+		// raw_player_response.streamingData.adaptiveFormats
+		if (jsonPlayerInfo.streamingData.adaptiveFormats) {
+			streams = streams.concat(jsonPlayerInfo.streamingData.adaptiveFormats);
 		}
+		// raw_player_response.streamingData.formats
+		if (jsonPlayerInfo.streamingData.formats) {
+			streams = streams.concat(jsonPlayerInfo.streamingData.formats);
+		}
+	} else {
+		return false;
+	}
+	
+	/*
+	// get current page video id
+	let vidID;
+	if (jsonPlayerInfo.videoDetails.videoId) {
+		vidID = jsonPlayerInfo.videoDetails.videoId;
+		console.log("TAO video id: ", vidID);
+	}
+	*/
+				
+	// get n parameter
+	let nParam;
+	if (jsonPlayerInfo.streamingData.serverAbrStreamingUrl) {
+		let nParamurl = decodeURIComponent(jsonPlayerInfo.streamingData.serverAbrStreamingUrl);
+		const urlParams = new URLSearchParams(nParamurl);
+		const nparamvalue = urlParams.get('n')
+
+		console.log("TAO n parameter: ", nparamvalue);
+	}			
+	//console.log(streams);
+	// audio only streams array
+	var audioStreams = streams.filter(function (el) {
+		//return el.mimeType == 'audio/webm; codecs="opus"';
+		return el.mimeType.startsWith('audio');
 	});
+				
+	//console.log(audioStreams); // array with the available audio streams
+				
+	// video+audio only streams array
+	var videoStreams = streams.filter(function (el) {
+		return el.mimeType.includes(',');
+	});
+
+	//console.log(videoStreams); // array with the available video streams
+	let audioid;
+	
+	audioStreams.forEach((stream, n) => {
+		var itag = stream.itag * 1;
+		audioid = false;
+		switch (itag) {
+			// audio
+			case 258: // aac 384 Kbps 5.1
+				audioid = '258';
+				console.log("TAO audio stream 258 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 258 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 258 url: " + stream.url);
+				break;
+			case 256: // aac 192 Kbps 5.1
+				audioid = '256';
+				console.log("TAO audio stream 256 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 256 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 256 url: " + stream.url);
+				break;
+			case 251: // webm (vbr) up to 160 Kbps (currently popular)
+				audioid = '251';
+				console.log("TAO audio stream 251 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 251 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 251 url: " + stream.url);
+				break;
+			case 250: // webm (vbr) ~70 Kbps (currently popular)
+				audioid = '250'; 
+				console.log("TAO audio stream 250 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 250 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 250 url: " + stream.url);
+				break;
+			case 249: // webm (vbr) ~50 Kbps (currently popular)
+				audioid = '249';
+				console.log("TAO audio stream 249 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 249 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 249 url: " + stream.url);
+				break;
+			case 141: // aac 256 Kbps
+				audioid = '141';
+				console.log("TAO audio stream 141 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 141 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 141 url: " + stream.url);
+				break;
+			case 140: // aac 48 Kbps (currently popular)
+				audioid = '140';
+				console.log("TAO audio stream 140 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 140 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 140 url: " + stream.url);
+				break;
+			case 139: // aac 48 Kbps
+				audioid = '139';
+				console.log("TAO audio stream 139 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 139 url: " + stream.url);
+				break;
+			case 171: // aac 48 Kbps
+				audioid = '171';
+				console.log("TAO audio stream 171 available, stream.url: ", stream.url);
+				//console.log("TAO audio stream 139 signatureCipher: ", stream.signatureCipher);
+				//console.log("TAO audio stream 139 url: " + stream.url);
+				break;
+			}
+			//console.log("TAO stream.signatureCipher " + stream.signatureCipher);
+			if (audioid) as[audioid] = stream.url;
+			if (audioid) asc[audioid] = stream.signatureCipher;
+		});
+				
+	// some ids are throttled, change as needed
+	let audioURL = as['258'] || as['256'] || as['251'] || as['250'] || as['249'] || as['141'] || as['140'] || as['139'] || as['171'];
+	let cipherurl = asc['258'] || asc['256'] || asc['251'] || asc['250'] || asc['249'] || asc['141'] || asc['140'] || asc['139'] || asc['171'];
+	//console.log("TAO audioURL " + audioURL);
+	//console.log("TAO cipherurl " + cipherurl);
+	
+	if ((audioURL) && (!cipherurl)) { // regular audio stream
+		console.log("TAO using regular audio only stream");
+		console.log("TAO audio-only url: ", audioURL);
+		recoveredAudioSource = audioURL; // making the audio source ready
+		playAudioOnly(); // play the audio source
+		
+	} else if ((!audioURL) && (cipherurl)) { // ciphered stream
+		console.log("TAO using ciphered audio only stream:", cipherurl);
+			
+		// split the signatureCipher
+		const splitedcipherurl = cipherurl.split('&');	
+		let signaturecipher = splitedcipherurl[0].slice(2);
+
+		signaturecipher = decodeURIComponent(signaturecipher);
+		console.log("TAO signatureCipher s: ", signaturecipher);
+		let signatureurl = splitedcipherurl[2].slice(4);
+					
+		console.log("TAO signatureCipher url: ", signatureurl);
+					
+		// without base.js we can't decode anything
+		if (!wasBasedotjsRetrieved || !decodedvarb) { // patience
+			//setUrl(); // reboot
+		}
+			
+		decodedsig = signaturecipher.split(""); // split before the loop
+		for (let i = 0; i < decodedloopsize.length -1; i++) {
+			// what should we do?
+			if (decodedchoice[i] == decodedsplice) { // slice
+				cipherTools.spl(decodedsig, decodedvarb[i]);
+				//console.log("TAO cipher splice match! ", decodedchoice[i], decodedsplice);
+			} else if (decodedchoice[i] == decodedswap) { // swap
+				cipherTools.swa(decodedsig, decodedvarb[i]);
+				//console.log("TAO cipher Swap match! ", decodedchoice[i], decodedswap);
+			} else if (decodedchoice[i] == decodedreverse) { // reverse
+				cipherTools.rev(decodedsig, decodedvarb[i]);
+				//console.log("TAO cipher reverse match! ", decodedchoice[i], decodedreverse);
+			}
+		}
+		decodedsig = decodedsig.join(""); // join after the loop
+		console.log("TAO signatureCipher s decrypted: ", decodedsig);
+					
+		// generate final url
+		let audioURLciphered = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
+		//let audioURLciphered = signatureurl + "&sig=" + decodedsig;
+		console.log("TAO audio-only ciphered url: ", audioURLciphered);
+		//console.log(decodeURIComponent(signatureurl));
+		recoveredAudioSource = audioURLciphered; // making the audio source ready
+		playAudioOnly(); // play the audio source
+		// unless we fix the n parameter we have to do this check
+		fetch(audioURLciphered, { method: 'HEAD' }).then((response) => {
+			if (!response.ok && response.status === 403) {
+				console.log("TAO audio stream ciphered response, rebooting... ", response.status);
+				//setUrl(); // reboot
+				return;
+			}    
+		});
+	}							
 }
 
 // disable page-focus on mobile firefox to allow background play
@@ -705,3 +708,51 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
+
+/*
+// current client data, IOS is really a first class citizen even according to Google
+const clientdata = { "context":
+							{ "client":
+								{ "hl": "en",
+									"clientName": "IOS",
+									"clientVersion": "18.11.34",
+									"deviceModel": "iPhone14,3",
+									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
+								}
+							},
+							"videoId": clientVideoid};
+//console.log("data right after was made: ", data);
+//console.log("data stringify right after was made1: ", JSON.stringify(data));
+*/
+
+async function postJSON(clientdata) {
+  try {
+    const response = await fetch("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", {
+      method: "POST", // or 'PUT'
+      mode: 'cors',
+      headers: {
+				'Accept': 'application/json',
+        'Content-Type': "application/json",
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ "context":
+							{ "client":
+								{ "hl": "en",
+									"clientName": "IOS",
+									"clientVersion": "18.11.34",
+									"deviceModel": "iPhone14,3",
+									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
+								}
+							},
+							"videoId": clientVideoid}),				
+    });
+
+    jsonPlayerInfo = await response.json();
+    console.log("TAO jsonPlayerInfo Success:", jsonPlayerInfo);
+    setUrl(); // once everything is retrieved we do our logic
+  } catch (error) {
+    console.error("TAO jsonPlayerInfo Error:", error);
+  }
+}
+
+postJSON();
