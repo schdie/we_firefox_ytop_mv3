@@ -90,13 +90,28 @@ async function storDisableAudioOnly() {
 }
 
 // function to play only audio
-function playAudioOnly() {
+async function playAudioOnly() {
+			// wait for videoElement to be ready
+	while(!document.getElementById('movie_player')) { // patience
+			await new Promise(r => requestAnimationFrame(r));
+	}
+	
+	
+	
 	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
 		console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
-		const videoElement = document.getElementsByTagName('video')[0];
+		//const videoElement = document.getElementsByTagName('video')[0];
+		const videoElement = document.getElementsByClassName('video-stream')[0];
 		videoElement.src = recoveredAudioSource;
 		setCurrentTime();
 		//videoElement.play();
+		
+		while(videoElement.src = "" || videoElement.src.indexOf("blob:") >= 0 ) { // patience
+			await new Promise(r => requestAnimationFrame(r));
+		}
+	
+
+		console.log("we made it");
 		
 		let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
 
@@ -104,14 +119,17 @@ function playAudioOnly() {
 			playPromise.then(_ => {
 				// Automatic playback started!
 				// Show playing UI.
-				console.log("TAO playAudioOnly started with no errors");
+				console.log("TAO playAudioOnly started with no errors", videoElement.src);
 			})
 			.catch(error => {
 				// not pretty but it works...
-				//console.log("play promise with errors", error);
+				console.log("play promise with errors", error);
+				console.log("play promise with errors src", videoElement.src);
 				videoElement.src = recoveredAudioSource;
 				videoElement.play();
 			});
+		} else {
+			console.log("TAO playPromise if bailed> ", videoElement.src);
 		}
 	}	
 }
