@@ -90,21 +90,13 @@ async function storDisableAudioOnly() {
 }
 
 // function to play only audio
-async function playAudioOnly() {
-	while(!document.getElementById('movie_player')) { // patience
-		await new Promise(r => requestAnimationFrame(r));
-	}
-	
+function playAudioOnly() {
 	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
 		console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
 		const videoElement = document.getElementsByTagName('video')[0];
-		if (recoveredAudioSource) { // on rare ocassions recoveredAudioSource is null
-			videoElement.src = recoveredAudioSource;
-			setCurrentTime();
-			videoElement.play();
-		} else { // let's try to fix it
-			console.log("TAO recovered audio was null: " + recoveredAudioSource);
-		}
+		videoElement.src = recoveredAudioSource;
+		setCurrentTime();
+		videoElement.play();
 	}	
 }
 
@@ -470,15 +462,20 @@ var vs;
 async function setUrl() {
 	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
  
+//	// wait for videoElement to be ready
+	while(!document.getElementById('movie_player')) { // patience
+			await new Promise(r => requestAnimationFrame(r));
+	}
+	
 	// we are so fast that we get a race condition where the audio gets replaced by the late video stream LMAO
-	const videoElement = document.getElementsByTagName('video')[0]; 
+	const videoElement = document.getElementsByTagName('video')[0];
 	if (videoElement.src.indexOf("blob:") >= 0) {
 		originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
-	} else {
-		//console.log("we are onto something");
-		while(videoElement.src.indexOf("blob:") < 0) { // patience
-			await new Promise(r => requestAnimationFrame(r));
-		}
+//	} else {
+//		//console.log("we are onto something");
+//		while(videoElement.src.indexOf("blob:") < 0) { // patience
+//			await new Promise(r => requestAnimationFrame(r));
+//		}
 	}
 	
 	as = {},  // audio streams
@@ -612,7 +609,8 @@ async function setUrl() {
 		console.log("TAO using regular audio only stream");
 		console.log("TAO audio-only url: ", audioURL);
 		recoveredAudioSource = audioURL; // making the audio source ready
-		playAudioOnly(); // play the audio source
+		//playAudioOnly(); // play the audio source
+		setTimeout(playAudioOnly, 100); // I need to do better than this but for now it works tm
 		
 	} else if ((!audioURL) && (cipherurl)) { // ciphered stream
 		console.log("TAO using ciphered audio only stream:", cipherurl);
@@ -756,4 +754,6 @@ async function postJSON(clientdata) {
   }
 }
 
-postJSON();
+if (document.location.href.includes('.youtube.com/watch?')) {
+	postJSON();
+}
