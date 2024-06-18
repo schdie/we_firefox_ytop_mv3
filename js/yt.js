@@ -96,7 +96,23 @@ function playAudioOnly() {
 		const videoElement = document.getElementsByTagName('video')[0];
 		videoElement.src = recoveredAudioSource;
 		setCurrentTime();
-		videoElement.play();
+		//videoElement.play();
+		
+		let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
+
+		if (playPromise !== undefined) {
+			playPromise.then(_ => {
+				// Automatic playback started!
+				// Show playing UI.
+				console.log("TAO playAudioOnly started with no errors");
+			})
+			.catch(error => {
+				// not pretty but it works...
+				//console.log("play promise with errors", error);
+				videoElement.src = recoveredAudioSource;
+				videoElement.play();
+			});
+		}
 	}	
 }
 
@@ -462,20 +478,14 @@ var vs;
 async function setUrl() {
 	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
  
-//	// wait for videoElement to be ready
+  // wait for videoElement to be ready
 	while(!document.getElementById('movie_player')) { // patience
 			await new Promise(r => requestAnimationFrame(r));
 	}
 	
-	// we are so fast that we get a race condition where the audio gets replaced by the late video stream LMAO
 	const videoElement = document.getElementsByTagName('video')[0];
 	if (videoElement.src.indexOf("blob:") >= 0) {
 		originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
-//	} else {
-//		//console.log("we are onto something");
-//		while(videoElement.src.indexOf("blob:") < 0) { // patience
-//			await new Promise(r => requestAnimationFrame(r));
-//		}
 	}
 	
 	as = {},  // audio streams
@@ -609,8 +619,8 @@ async function setUrl() {
 		console.log("TAO using regular audio only stream");
 		console.log("TAO audio-only url: ", audioURL);
 		recoveredAudioSource = audioURL; // making the audio source ready
-		//playAudioOnly(); // play the audio source
-		setTimeout(playAudioOnly, 100); // I need to do better than this but for now it works tm
+		playAudioOnly(); // play the audio source
+		//setTimeout(playAudioOnly, 100); // I need to do better than this but for now it works tm
 		
 	} else if ((!audioURL) && (cipherurl)) { // ciphered stream
 		console.log("TAO using ciphered audio only stream:", cipherurl);
