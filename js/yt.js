@@ -91,18 +91,11 @@ async function storDisableAudioOnly() {
 // function to play only audio
 async function playAudioOnly() {
 	// after the movie_player has loaded...
-	while((navigator.mediaSession.playbackState === "none") || (navigator.mediaSession.playbackState === "paused")) { // patience
-		await new Promise(r => requestAnimationFrame(r));
-	}
-
-	console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
-		
-	if (navigator.mediaSession.playbackState === "playing") {
-		console.log("media is playing");
-	} else {
-		console.log("media is not playing", navigator.mediaSession.playbackState);
-	}
 	const videoElement = document.getElementsByClassName('video-stream')[0];
+	//if (!videoElement.src.indexOf("blob:") >= 0) {
+	//	return setTimeout(playAudioOnly, 3000);
+	//}
+
 
 	// brute-forcing our way
 	async function playVideo() {
@@ -110,7 +103,7 @@ async function playAudioOnly() {
 			await videoElement.play();
 		} catch (err) {
 			console.log("err ", err);
-			playAudioOnly();
+			playAudioOnly(); // reset
 		}
 	}
 
@@ -119,15 +112,33 @@ async function playAudioOnly() {
 	if (playPromise !== undefined) {
 		playPromise.then(_ => {
 			videoElement.pause();
-			videoElement.setAttribute("src", recoveredAudioSource);
+			//videoElement.setAttribute("src", recoveredAudioSource);
+			videoElement.src = recoveredAudioSource;
 			setCurrentTime();
 			playVideo();
-			//console.log("TAO playAudioOnly started with no errors", videoElement.src);
+			console.log("TAO playAudioOnly playPromise started with no errors", videoElement.src);
+			//checksrc(); // call to check everything is ok because youtube is weird
+			setTimeout(checksrc, 200);
 		})
 		.catch(error => {
 			console.log("TAO playAudioOnly playPromise errors: ", error);
+			return playAudioOnly();
 		});
 	}
+}
+
+// used to check if yt doesn't change the source in the first 3.5 seconds
+function checksrc(repeats = 7) {
+  if (repeats > 0) {
+		const videoElement = document.getElementsByClassName('video-stream')[0];
+		//console.log("checking current src: ", videoElement.src);
+	if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again
+		return playAudioOnly();
+		//console.log("videoelement changed in checksrsc");
+		return;
+	}
+    setTimeout(() => checksrc(repeats - 1), 500);
+  }
 }
 
 // function to play the original stream with video+audio
