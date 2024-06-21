@@ -90,6 +90,18 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 async function playAudioOnly() {
+	// after the movie_player has loaded...
+	while((navigator.mediaSession.playbackState === "none") || (navigator.mediaSession.playbackState === "paused")) { // patience
+		await new Promise(r => requestAnimationFrame(r));
+	}
+
+	console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
+		
+	if (navigator.mediaSession.playbackState === "playing") {
+		console.log("media is playing");
+	} else {
+		console.log("media is not playing", navigator.mediaSession.playbackState);
+	}
 	const videoElement = document.getElementsByClassName('video-stream')[0];
 
 	// brute-forcing our way
