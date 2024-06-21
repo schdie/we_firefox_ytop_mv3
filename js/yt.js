@@ -48,7 +48,6 @@ function getVideoIdentifier() {
 			clientVideoid = clientVideoid.split('&')[0];
 		}
 	console.log("TAO clientVideoid: ", clientVideoid);
-	//postJSON(clientdata);
 	}
 }
 
@@ -91,47 +90,32 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 async function playAudioOnly() {
-			// wait for videoElement to be ready
-	while(!document.getElementById('movie_player')) { // patience
-			await new Promise(r => requestAnimationFrame(r));
+	const videoElement = document.getElementsByClassName('video-stream')[0];
+
+	// brute-forcing our way
+	async function playVideo() {
+		try {
+			await videoElement.play();
+		} catch (err) {
+			console.log("err ", err);
+			playAudioOnly();
+		}
 	}
-	
-	
-	
-	if (isAudioEnabledfromStorage === 1) { // make sure we play audio only when it's enabled only
-		console.log("TAO playAudioOnly called and audio only is enabled: " + recoveredAudioSource);
-		//const videoElement = document.getElementsByTagName('video')[0];
-		const videoElement = document.getElementsByClassName('video-stream')[0];
-		videoElement.src = recoveredAudioSource;
-		setCurrentTime();
-		//videoElement.play();
-		
-		while(videoElement.src = "" || videoElement.src.indexOf("blob:") >= 0 ) { // patience
-			await new Promise(r => requestAnimationFrame(r));
-		}
-	
 
-		console.log("we made it");
-		
-		let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
+	let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
 
-		if (playPromise !== undefined) {
-			playPromise.then(_ => {
-				// Automatic playback started!
-				// Show playing UI.
-				console.log("TAO playAudioOnly started with no errors", videoElement.src);
-			})
-			.catch(error => {
-				// not pretty but it works...
-				console.log("play promise with errors", error);
-				console.log("play promise with errors src", videoElement.src);
-				videoElement.src = recoveredAudioSource;
-				videoElement.play();
-			});
-		} else {
-			console.log("TAO playPromise if bailed> ", videoElement.src);
-		}
-	}	
+	if (playPromise !== undefined) {
+		playPromise.then(_ => {
+			videoElement.pause();
+			videoElement.setAttribute("src", recoveredAudioSource);
+			setCurrentTime();
+			playVideo();
+			//console.log("TAO playAudioOnly started with no errors", videoElement.src);
+		})
+		.catch(error => {
+			console.log("TAO playAudioOnly playPromise errors: ", error);
+		});
+	}
 }
 
 // function to play the original stream with video+audio
@@ -155,6 +139,7 @@ function setCurrentTime() {
 		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
 		// set the current time for the video element
 		videoElement.currentTime = currentTimeSeconds;
+		//videoElement.setAttribute("currentTime", currentTimeSeconds);
 	} else { // mobile
 		// find the video element
 		const videoElement = document.getElementsByTagName('video')[0];
@@ -385,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	//postJSON(data);
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
 		console.log("TAO calling only once: getbasejs and createAudioDiv");
-		
+		postJSON(); // get client info
 		createAudioDiv(); // create the div for the user interface
 	}
 });
@@ -455,9 +440,7 @@ window.addEventListener("load", () => {
 		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
 			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
 			oldHref = document.location.href; // what's new is old
-      // on changes
-      //getbasejs(); // get the base.js file
-//			setUrl(); // retrieve the audio streams
+
 			getVideoIdentifier(); // on url change get the new videoId
 			postJSON(); // retrieve the video data
       console.log("TAO (url change), not on main page: " + oldHref);
@@ -634,11 +617,10 @@ async function setUrl() {
 	//console.log("TAO cipherurl " + cipherurl);
 	
 	if ((audioURL) && (!cipherurl)) { // regular audio stream
-		console.log("TAO using regular audio only stream");
-		console.log("TAO audio-only url: ", audioURL);
+		console.log("TAO using regular audio only stream", audioURL);
 		recoveredAudioSource = audioURL; // making the audio source ready
 		playAudioOnly(); // play the audio source
-		//setTimeout(playAudioOnly, 100); // I need to do better than this but for now it works tm
+		//setTimeout(playAudioOnly, 3000); // I need to do better than this but for now it works tm
 		
 	} else if ((!audioURL) && (cipherurl)) { // ciphered stream
 		console.log("TAO using ciphered audio only stream:", cipherurl);
@@ -735,23 +717,8 @@ var cipherTools = {
     }
 };
 
-/*
-// current client data, IOS is really a first class citizen even according to Google
-const clientdata = { "context":
-							{ "client":
-								{ "hl": "en",
-									"clientName": "IOS",
-									"clientVersion": "18.11.34",
-									"deviceModel": "iPhone14,3",
-									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
-								}
-							},
-							"videoId": clientVideoid};
-//console.log("data right after was made: ", data);
-//console.log("data stringify right after was made1: ", JSON.stringify(data));
-*/
-
-async function postJSON(clientdata) {
+// retrieve video info using custom client data
+async function postJSON() {
   try {
     const response = await fetch("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", {
       method: "POST", // or 'PUT'
@@ -780,8 +747,4 @@ async function postJSON(clientdata) {
   } catch (error) {
     console.error("TAO jsonPlayerInfo Error:", error);
   }
-}
-
-if (document.location.href.includes('.youtube.com/watch?')) {
-	postJSON();
 }
