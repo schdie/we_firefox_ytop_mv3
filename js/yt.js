@@ -90,12 +90,7 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 async function playAudioOnly() {
-	// after the movie_player has loaded...
 	const videoElement = document.getElementsByClassName('video-stream')[0];
-	//if (!videoElement.src.indexOf("blob:") >= 0) {
-	//	return setTimeout(playAudioOnly, 3000);
-	//}
-
 
 	// brute-forcing our way
 	async function playVideo() {
@@ -117,11 +112,10 @@ async function playAudioOnly() {
 			setCurrentTime();
 			playVideo();
 			console.log("TAO playAudioOnly playPromise started with no errors", videoElement.src);
-			//checksrc(); // call to check everything is ok because youtube is weird
-			setTimeout(checksrc, 200);
+			setTimeout(checksrc, 200); // re-check src is our audio only because on testing this is not always the case
 		})
 		.catch(error => {
-			console.log("TAO playAudioOnly playPromise errors: ", error);
+			console.log("TAO playAudioOnly playPromise did not start, error: ", error);
 			return playAudioOnly();
 		});
 	}
@@ -131,13 +125,13 @@ async function playAudioOnly() {
 function checksrc(repeats = 7) {
   if (repeats > 0) {
 		const videoElement = document.getElementsByClassName('video-stream')[0];
-		//console.log("checking current src: ", videoElement.src);
-	if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again
-		return playAudioOnly();
-		//console.log("videoelement changed in checksrsc");
-		return;
-	}
-    setTimeout(() => checksrc(repeats - 1), 500);
+		console.log("TAO checksrc called: ", repeats);
+		if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again
+			return playAudioOnly();
+			console.log("TAO src changed, calling playAudioOnly again.");
+			return;
+		}
+	setTimeout(() => checksrc(repeats - 1), 500);
   }
 }
 
