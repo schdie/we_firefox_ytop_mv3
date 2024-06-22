@@ -98,7 +98,7 @@ async function playAudioOnly() {
 			await videoElement.play();
 		} catch (err) {
 			console.log("err ", err);
-			playAudioOnly(); // reset
+			//playAudioOnly(); // reset
 		}
 	}
 
@@ -112,7 +112,8 @@ async function playAudioOnly() {
 			setCurrentTime();
 			playVideo();
 			console.log("TAO playAudioOnly playPromise started with no errors", videoElement.src);
-			setTimeout(checksrc, 200); // re-check src is our audio only because on testing this is not always the case
+			setTimeout(checksrc, 300); // re-check src is our audio only stream because while testing this was not always the case
+			console.log("TAO calling checksrc from playAudioOnly");
 		})
 		.catch(error => {
 			console.log("TAO playAudioOnly playPromise did not start, error: ", error);
@@ -121,18 +122,17 @@ async function playAudioOnly() {
 	}
 }
 
-// used to check if yt doesn't change the source in the first 3.5 seconds
+// used to check if yt doesn't change the source in the first ~5 seconds
 function checksrc(repeats = 7) {
   if (repeats > 0) {
 		const videoElement = document.getElementsByClassName('video-stream')[0];
-		console.log("TAO checksrc called: ", repeats);
-		if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again
-			return playAudioOnly();
+		console.log("TAO checksrc exec: ", repeats);
+		if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again;
 			console.log("TAO src changed, calling playAudioOnly again.");
-			return;
+			return playAudioOnly(); // bail here 
 		}
-	setTimeout(() => checksrc(repeats - 1), 500);
   }
+  setTimeout(() => checksrc(repeats - 1), 700);
 }
 
 // function to play the original stream with video+audio
@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	//postJSON(data);
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
 		console.log("TAO calling only once: getbasejs and createAudioDiv");
-		postJSON(); // get client info
+//		postJSON(); // get client info
 		createAudioDiv(); // create the div for the user interface
 	}
 });
@@ -765,3 +765,6 @@ async function postJSON() {
     console.error("TAO jsonPlayerInfo Error:", error);
   }
 }
+
+// testing:
+// id="confirm-button"
