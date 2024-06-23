@@ -381,29 +381,9 @@ async function monitorForClicksMobile() {
 	});
 }
 
-// auto-clicker for "...Continue watching?"
-async function areyoustillwatching() {
-	// wait for videoElement to be ready
-	while(!document.getElementById("full-bleed-container")) { // patience
-			await new Promise(r => requestAnimationFrame(r));
-	}
-
-	const confirmParent = document.getElementById("full-bleed-container");
-	console.log("hooked to full-bleed-container", confirmParent);
-
-	confirmParent.addEventListener("change", function(event) {
-		if ( event.target.id === 'confirm-button') {
-			// Do your magic
-			console.log("Element with id 'elementid' clicked!");
-			//document.getElementById("checkbox-enabled-confirm-button").click();
-			//document.getElementById("confirm-button").click();
-		}
-	});
-}
-
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
-	areyoustillwatching(); // hook to auto-click that annoying button
+	setInterval(() => window._lact = Date.now(), 600000); // for "Are You Still There?", every ~10min
 	//getbasejs(); // try to get the base.js for later if needed
 	//postJSON(data);
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
