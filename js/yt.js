@@ -53,6 +53,49 @@ function getVideoIdentifier() {
 
 getVideoIdentifier();
 
+// to avoid cors the fetch url needs to change accordingly
+var postJSON_fetchURL;
+
+if (navigator.userAgent.includes('Mobile')) {
+	console.log("TAO running on mobile device.")
+	postJSON_fetchURL = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+} else {
+	console.log("TAO running on desktop.")
+	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+}
+
+// retrieve video info using custom client data
+async function postJSON() {
+  try {
+    const response = await fetch(postJSON_fetchURL, {
+      method: "POST", // or 'PUT'
+      mode: 'cors',
+      headers: {
+				'Accept': 'application/json',
+        'Content-Type': "application/json",
+        'Access-Control-Allow-Origin': '*',
+        'credentials': "same-origin",
+      },
+      body: JSON.stringify({ "context":
+							{ "client":
+								{ "hl": "en",
+									"clientName": "IOS",
+									"clientVersion": "18.11.34",
+									"deviceModel": "iPhone14,3",
+									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
+								}
+							},
+							"videoId": clientVideoid}),				
+    });
+
+    jsonPlayerInfo = await response.json();
+    console.log("TAO jsonPlayerInfo Success:", jsonPlayerInfo);
+    setUrl(); // once everything is retrieved we do our logic
+  } catch (error) {
+    console.error("TAO jsonPlayerInfo Error:", error);
+  }
+}
+
 // get the stored value of audioonly and set the isAudioEnabledfromStorage var
 async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
@@ -155,7 +198,9 @@ function setCurrentTime() {
 		const videoElement = document.getElementsByTagName('video')[0];
 		
 		// this works when switching because the time is usually not 0
-		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
+		//let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
+		let currentTimeSwitch = document.getElementsByClassName('YtwPlayerTimeDisplayTime')[0];
+		
 		if ((currentTimeSwitch) && currentTimeSwitch.textContent !== "0:00") {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
 			videoElement.currentTime = currentTimeSwitchSeconds;
@@ -376,7 +421,10 @@ async function monitorForClicksMobile() {
 
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
-	setInterval(() => window._lact = Date.now(), 600000); // for "Are You Still There?", every ~10min
+	if (!document.location.href.includes('m.youtube.com/watch?')) {
+		setInterval(() => window._lact = Date.now(), 600000); // for "Are You Still There?", every ~10min
+		console.log("TAO Are You Still There? fix for desktop.");
+	}
 	//getbasejs(); // try to get the base.js for later if needed
 	//postJSON(data);
 	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
@@ -728,47 +776,3 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
-
-
-// to avoid cors the url needs to change if desktop/mobile
-var postJSON_fetchURL;
-
-if (navigator.userAgent.includes('Mobile')) {
-	console.log("TAO running on mobile device.")
-	postJSON_fetchURL = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-} else {
-	console.log("TAO running on desktop.")
-	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-}
-
-// retrieve video info using custom client data
-async function postJSON() {
-  try {
-    const response = await fetch(postJSON_fetchURL, {
-      method: "POST", // or 'PUT'
-      mode: 'cors',
-      headers: {
-				'Accept': 'application/json',
-        'Content-Type': "application/json",
-        'Access-Control-Allow-Origin': '*',
-        'credentials': "same-origin",
-      },
-      body: JSON.stringify({ "context":
-							{ "client":
-								{ "hl": "en",
-									"clientName": "IOS",
-									"clientVersion": "18.11.34",
-									"deviceModel": "iPhone14,3",
-									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
-								}
-							},
-							"videoId": clientVideoid}),				
-    });
-
-    jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo Success:", jsonPlayerInfo);
-    setUrl(); // once everything is retrieved we do our logic
-  } catch (error) {
-    console.error("TAO jsonPlayerInfo Error:", error);
-  }
-}
