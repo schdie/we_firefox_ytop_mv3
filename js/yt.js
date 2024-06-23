@@ -53,13 +53,6 @@ function getVideoIdentifier() {
 
 getVideoIdentifier();
 
-// sending the current url to the service worker
-function urlChanged(e) {
-  const sending = browser.runtime.sendMessage({
-    currloc: document.location.href,
-  });
-}
-
 // get the stored value of audioonly and set the isAudioEnabledfromStorage var
 async function getStoredValues() {
 	const {audioonly} = await browser.storage.local.get('audioonly');
@@ -455,14 +448,15 @@ window.addEventListener("load", () => {
   let oldHref;
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
-		if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
+		//if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
+		if ((oldHref !== document.location.href) && (document.location.href.includes('.youtube.com/watch?') || document.location.href.includes('m.youtube.com/watch?'))) {	
 			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
 			oldHref = document.location.href; // what's new is old
 
 			getVideoIdentifier(); // on url change get the new videoId
 			postJSON(); // retrieve the video data
       console.log("TAO (url change), not on main page: " + oldHref);
-      
+
 			// try to create our div if not already
 			createAudioDiv();
     } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
@@ -735,10 +729,22 @@ var cipherTools = {
     }
 };
 
+
+// to avoid cors the url needs to change if desktop/mobile
+var postJSON_fetchURL;
+
+if (navigator.userAgent.includes('Mobile')) {
+	console.log("TAO running on mobile device.")
+	postJSON_fetchURL = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+} else {
+	console.log("TAO running on desktop.")
+	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+}
+
 // retrieve video info using custom client data
 async function postJSON() {
   try {
-    const response = await fetch("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", {
+    const response = await fetch(postJSON_fetchURL, {
       method: "POST", // or 'PUT'
       mode: 'cors',
       headers: {
@@ -766,8 +772,3 @@ async function postJSON() {
     console.error("TAO jsonPlayerInfo Error:", error);
   }
 }
-
-// testing:
-// id="confirm-button"
-//checkbox-enabled-confirm-button
-//document.getElementById("checkbox-enabled-confirm-button").click();
