@@ -143,6 +143,9 @@ async function playAudioOnly() {
 	if (playPromise !== undefined) {
 		playPromise.then(_ => {
 			videoElement.pause();
+			
+			if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src; } // needed when: there's no autoplay, video started without audio-only, the user switched to video again
+						
 			//videoElement.setAttribute("src", recoveredAudioSource);
 			videoElement.src = recoveredAudioSource;
 			setCurrentTime();
@@ -160,6 +163,7 @@ async function playAudioOnly() {
 
 // used to check if yt doesn't change the source in the first ~5 seconds
 function checksrc(repeats = 7) {
+	if (isAudioEnabledfromStorage === 0) { return; } // fix possible race condition bug
   if (repeats > 0) {
 		const videoElement = document.getElementsByClassName('video-stream')[0];
 		console.log("TAO checksrc exec: ", repeats);
@@ -198,8 +202,7 @@ function setCurrentTime() {
 		const videoElement = document.getElementsByTagName('video')[0];
 		
 		// this works when switching because the time is usually not 0
-		//let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
-		let currentTimeSwitch = document.getElementsByClassName('YtwPlayerTimeDisplayTime')[0];
+		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
 		
 		if ((currentTimeSwitch) && currentTimeSwitch.textContent !== "0:00") {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
@@ -537,7 +540,7 @@ var asc;
 var vs;
 
 async function setUrl() {
-	if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
+	//if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
  
   // wait for videoElement to be ready
 	while(!document.getElementById('movie_player')) { // patience
@@ -545,7 +548,7 @@ async function setUrl() {
 	}
 	
 	const videoElement = document.getElementsByTagName('video')[0];
-	if (videoElement.src.indexOf("blob:") >= 0) {
+	if (videoElement.src.indexOf("blob:") >= 0) { // if the user has no autoplay enabled this will be null, fix later...
 		originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
 	}
 	
@@ -679,6 +682,7 @@ async function setUrl() {
 	if ((audioURL) && (!cipherurl)) { // regular audio stream
 		console.log("TAO using regular audio only stream", audioURL);
 		recoveredAudioSource = audioURL; // making the audio source ready
+		if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
 		playAudioOnly(); // play the audio source
 		//setTimeout(playAudioOnly, 3000); // I need to do better than this but for now it works tm
 		
