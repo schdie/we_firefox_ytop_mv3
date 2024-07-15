@@ -126,12 +126,16 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 async function playAudioOnly() {
+	console.log("TAO playAudioOnly called: " + recoveredAudioSource);
 	const videoElement = document.getElementsByClassName('video-stream')[0];
-
+	let cTime = videoElement.currentTime; // save the current video player time
+	
 	// brute-forcing our way
 	async function playVideo() {
 		try {
 			await videoElement.play();
+			videoElement.fastSeek(cTime,true);
+			console.log("TAO playAudioOnly current time: ", cTime);
 		} catch (err) {
 			console.log("err ", err);
 			//playAudioOnly(); // reset
@@ -148,7 +152,7 @@ async function playAudioOnly() {
 						
 			//videoElement.setAttribute("src", recoveredAudioSource);
 			videoElement.src = recoveredAudioSource;
-			setCurrentTime();
+			//setCurrentTime();
 			playVideo();
 			console.log("TAO playAudioOnly playPromise started with no errors", videoElement.src);
 			setTimeout(checksrc, 300); // re-check src is our audio only stream because while testing this was not always the case
@@ -179,11 +183,14 @@ function checksrc(repeats = 7) {
 function playVideoWithAudio() {
 	console.log("TAO playVideoWithAudio called: " + originalVideoSource);
 	const videoElement = document.getElementsByTagName('video')[0];
+	console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
 	videoElement.src = originalVideoSource;
-	setCurrentTime();
+	videoElement.fastSeek(videoElement.currentTime,true); // set current time
+	//setCurrentTime();
 	videoElement.play();
 }
 
+/*
 // get the current time of the player to allow for a seamless switch
 function setCurrentTime() {
 	// desktop
@@ -202,11 +209,13 @@ function setCurrentTime() {
 		const videoElement = document.getElementsByTagName('video')[0];
 		
 		// this works when switching because the time is usually not 0
-		let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
-		
+		//let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
+		let currentTimeSwitch = videoElement.currentTime;
+		console.log("mobile!, currentTimeSwitch: ", document.getElementsByTagName('video')[0].currentTime);
 		if ((currentTimeSwitch) && currentTimeSwitch.textContent !== "0:00") {
 			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
-			videoElement.currentTime = currentTimeSwitchSeconds;
+			//videoElement.currentTime = currentTimeSwitchSeconds;
+			videoElement.fastSeek(currentTimeSwitchSeconds,true);
 		} else { // this is hacky at best, if time is zero but the url has a timestamp we use that
 			// get the time from href
 			let urlTime = document.location.href.split('&t=');
@@ -220,6 +229,7 @@ function setCurrentTime() {
 		}
 	}
 }
+*/
 
 // function to create our audioonly div
 async function createAudioDiv() {
