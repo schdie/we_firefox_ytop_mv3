@@ -510,7 +510,7 @@ window.addEventListener("load", () => {
   const body = document.querySelector("body");
   const observer = new MutationObserver(mutations => {
 		//if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
-		if ((oldHref !== document.location.href) && (document.location.href.includes('.youtube.com/watch?') || document.location.href.includes('m.youtube.com/watch?'))) {	
+		if ((oldHref !== document.location.href.split('#')[0]) && (document.location.href.includes('.youtube.com/watch?') || document.location.href.includes('m.youtube.com/watch?'))) {	
 			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
 			oldHref = document.location.href; // what's new is old
 
