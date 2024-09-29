@@ -89,10 +89,50 @@ async function postJSON() {
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo Success:", jsonPlayerInfo);
-    setUrl(); // once everything is retrieved we do our logic
+    console.log("TAO jsonPlayerInfo response Success:", jsonPlayerInfo);
+    if (jsonPlayerInfo.streamingData) {
+			console.log("TAO jsonPlayerInfo response has streams.");
+			setUrl(); // once everything is retrieved we do our logic
+		} else {
+			console.log("TAO jsonPlayerInfo response has no streams, checking age restriction...");
+			postJSONagerestricted();
+		}
   } catch (error) {
-    console.error("TAO jsonPlayerInfo Error:", error);
+    console.error("TAO jsonPlayerInfo response Error:", error);
+  }
+}
+
+// retrieve video info using custom client data for age-restricted videos
+async function postJSONagerestricted() {
+  try {
+    const response = await fetch(postJSON_fetchURL, {
+      method: "POST", // or 'PUT'
+      mode: 'cors',
+      headers: {
+				'Accept': 'application/json',
+        'Content-Type': "application/json",
+        'Access-Control-Allow-Origin': '*',
+        'credentials': "same-origin",
+      },
+      body: JSON.stringify({ "context":
+							{ "client":
+								{ "clientName": "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+									"clientVersion": "2.0"
+								}
+							},
+							"videoId": clientVideoid}),				
+    });
+
+    jsonPlayerInfo = await response.json();
+    console.log("TAO jsonPlayerInfo (agerestricted) response Success:", jsonPlayerInfo);
+    if (jsonPlayerInfo.streamingData) {
+			console.log("TAO jsonPlayerInfo (agerestricted) response has streams.");
+			setUrl(); // once everything is retrieved we do our logic
+		} else {
+			console.log("TAO jsonPlayerInfo (agerestricted) response has no streams.");
+		}
+  } catch (error) {
+    console.error("TAO jsonPlayerInfo (agerestricted) response Error:", error);
   }
 }
 
