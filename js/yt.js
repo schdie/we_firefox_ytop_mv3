@@ -24,6 +24,7 @@ var decodedchoice = [];
 var decodedsplice;
 var decodedswap;
 var decodedreverse;
+var bjstimestamp;
 
 var decodedsig;
 
@@ -78,61 +79,90 @@ async function postJSON() {
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ "hl": "en",
-									"clientName": "IOS",
-									"clientVersion": "18.11.34",
-									"deviceModel": "iPhone14,3",
-									"userAgent": "com.google.ios.youtube/18.11.34 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)"
-								}
+								{ 'clientName': 'IOS',
+                'clientVersion': '19.29.1',
+                'deviceMake': 'Apple',
+                'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)',
+                'osName': 'iPhone',
+                'osVersion': '17.5.1.21F90'
+								},
+								//"contentCheckOk": "True",
+								//"racyCheckOk": "True"
+								//"thirdParty": {
+								//	"embedUrl": "https://www.youtube.com"
+								//}
 							},
-							"videoId": clientVideoid}),				
+							//"racyCheckOk": "true",
+              //"contentCheckOk": "true",
+							"videoId": clientVideoid}),			
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo response Success:", jsonPlayerInfo);
+    console.log("TAO jsonPlayerInfo response retrieved successfully.");
     if (jsonPlayerInfo.streamingData) {
-			console.log("TAO jsonPlayerInfo response has streams.");
+			console.log("TAO jsonPlayerInfo response has streams.", jsonPlayerInfo);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
-			console.log("TAO jsonPlayerInfo response has no streams, checking age restriction...");
-			postJSONagerestricted();
+			console.log("TAO jsonPlayerInfo response has no streams.");
+			postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
 		}
   } catch (error) {
     console.error("TAO jsonPlayerInfo response Error:", error);
   }
 }
 
-// retrieve video info using custom client data for age-restricted videos
-async function postJSONagerestricted() {
+// retrieve video info using custom client data for self harm warning videos
+async function postJSONsansh() {
   try {
     const response = await fetch(postJSON_fetchURL, {
       method: "POST", // or 'PUT'
       mode: 'cors',
+      credentials: 'include',
       headers: {
 				'Accept': 'application/json',
         'Content-Type': "application/json",
         'Access-Control-Allow-Origin': '*',
-        'credentials': "same-origin",
+        //'credentials': "same-origin",
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ "clientName": "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-									"clientVersion": "2.0"
+								{ 'clientName': 'IOS',
+                'clientVersion': '19.29.1',
+                'deviceMake': 'Apple',
+                'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)',
+                'osName': 'iPhone',
+                'osVersion': '17.5.1.21F90'
 								}
 							},
+							//"serviceIntegrityDimensions": {
+							//	"poToken": "MnTL88XvSRsk9svLt6Z89-OuRL2Epp3b-W9hli5NpOMvC8rI7urohSKga48cq8GuaqedsvBCGdWoFBJccOczlKeKcSnf-uphk9uOuxglGFrngE4I5sflG689GNXJ9qJJuvhpppYJ2-wdBQWKQU_GclstvTwMmw=="
+							//},
+							"thirdParty": {
+									"embedUrl": "https://www.youtube.com"
+							},
+							"racyCheckOk": true,
+              "contentCheckOk": true,
+							//"playbackContext": {
+							//	"contentPlaybackContext": {
+							//		"signatureTimestamp": "19997"
+							//	}
+							//},
 							"videoId": clientVideoid}),				
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo (agerestricted) response Success:", jsonPlayerInfo);
+    console.log("TAO jsonPlayerInfo (s&sh topics) response retrieved successfully.");
     if (jsonPlayerInfo.streamingData) {
-			console.log("TAO jsonPlayerInfo (agerestricted) response has streams.");
+			console.log("TAO jsonPlayerInfo (s&sh topics) response has streams.", jsonPlayerInfo);
+			console.log("TAO jsonPlayerInfo (s&sh topics) visitorData:", jsonPlayerInfo.responseContext.visitorData);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
-			console.log("TAO jsonPlayerInfo (agerestricted) response has no streams.");
+			console.log("TAO jsonPlayerInfo (s&sh topics) response has no streams.");
 		}
   } catch (error) {
-    console.error("TAO jsonPlayerInfo (agerestricted) response Error:", error);
+    console.error("TAO jsonPlayerInfo (s&sh topics) response Error:", error);
   }
 }
 
@@ -508,18 +538,21 @@ async function getbasejs() {
 					wasBasedotjsRetrieved = data; // save it, no need to retrieve it again for the session
 					
 					// base.js aliases
+					//console.log("TAO CIPHER data: ", data);
+					bjstimestamp = data.split(',signatureTimestamp:')[1].split('}')[0];
+					console.log("TAO CIPHER function timestamp: ", bjstimestamp);
 					decodedreverse = data.split(':function(a){a.reverse()')[0].slice(-2); // reverse alias
-					console.log("function find testing!!", decodedreverse);
+					console.log("TAO CIPHER function reverse: ", decodedreverse);
 					decodedswap = data.split(':function(a,b){var c=a[')[0].slice(-2); // swap alias
-					console.log("function find testing!!", decodedswap);
+					console.log("TAO CIPHER function swap: ", decodedswap);
 					decodedsplice = data.split(':function(a,b){a.splice')[0].slice(-2); // splice alias
-					console.log("function find testing!!", decodedsplice);
+					console.log("TAO CIPHER function splice: ", decodedsplice);
 					
 					// retrieve the cipher function
 					let lines = data.split('\n');
 					lines.forEach(l => {
 						if (l.indexOf('a.split("");') > -1) { // retrieve the current signatureCipher function
-							console.log('TAO cipher main function splited: ', l.slice(30).split('return')[0]);
+							console.log('TAO CIPHER main function splited: ', l.slice(30).split('return')[0]);
 							decodedloopsize = l.slice(30).split('return')[0];
 							decodedloopsize = decodedloopsize.split(";");
 							
@@ -529,7 +562,7 @@ async function getbasejs() {
 								//console.log("TAO cipher parameter b" + [i] + ": ", decodedvarb[i]);
 								
 								decodedchoice[i] = decodedloopsize[i].split('(')[0].split('.')[1]; // save function alias
-								console.log("function alias and parameter: "+[i]+": ", decodedchoice[i], decodedvarb[i]);
+								console.log("TAO function alias and parameter: "+[i]+": ", decodedchoice[i], decodedvarb[i]);
 							} 
 						}
 					});
@@ -556,6 +589,7 @@ window.addEventListener("load", () => {
 
 			getVideoIdentifier(); // on url change get the new videoId
 			postJSON(); // retrieve the video data
+			//postJSONagerestricted(); //testing
       console.log("TAO (url change), not on main page: " + oldHref);
 
 			// try to create our div if not already
@@ -737,23 +771,24 @@ async function setUrl() {
 		//setTimeout(playAudioOnly, 3000); // I need to do better than this but for now it works tm
 		
 	} else if ((!audioURL) && (cipherurl)) { // ciphered stream
-		console.log("TAO using ciphered audio only stream:", cipherurl);
-			
+		//console.log("TAO using ciphered audio only stream:", cipherurl);
+		
 		// split the signatureCipher
-		const splitedcipherurl = cipherurl.split('&');	
+		const splitedcipherurl = cipherurl.split('&');
+		
 		let signaturecipher = splitedcipherurl[0].slice(2);
-
-		signaturecipher = decodeURIComponent(signaturecipher);
-		console.log("TAO signatureCipher s: ", signaturecipher);
-		let signatureurl = splitedcipherurl[2].slice(4);
-					
-		console.log("TAO signatureCipher url: ", signatureurl);
-					
+		let signaturespparam = splitedcipherurl[1].slice(3);
+		let signatureurlparam = decodeURIComponent(splitedcipherurl[2].slice(4));
+		//console.log("signaturecipher: ", signaturecipher);
+		//console.log("signaturespparam: ", signaturespparam);
+		//console.log("signatureurlparam: ", signatureurlparam);
+		
 		// without base.js we can't decode anything
 		if (!wasBasedotjsRetrieved || !decodedvarb) { // patience
 			//setUrl(); // reboot
 		}
-			
+		
+		//signaturecipher = encodeURI(signaturecipher);	 //test
 		decodedsig = signaturecipher.split(""); // split before the loop
 		for (let i = 0; i < decodedloopsize.length -1; i++) {
 			// what should we do?
@@ -772,8 +807,9 @@ async function setUrl() {
 		console.log("TAO signatureCipher s decrypted: ", decodedsig);
 					
 		// generate final url
-		let audioURLciphered = decodeURIComponent(signatureurl) + "&sig=" + decodedsig;
-		//let audioURLciphered = signatureurl + "&sig=" + decodedsig;
+		let audioURLciphered = signatureurlparam + "&" + signaturespparam +"=" + decodedsig;
+		//let audioURLciphered = decodeURIComponent(signatureurl) + "&sp=" + decodedsig;
+		//let audioURLciphered = signatureurl + "&sp=" + decodedsig;
 		console.log("TAO audio-only ciphered url: ", audioURLciphered);
 		//console.log(decodeURIComponent(signatureurl));
 		recoveredAudioSource = audioURLciphered; // making the audio source ready
