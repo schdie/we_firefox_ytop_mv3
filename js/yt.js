@@ -40,6 +40,9 @@ var originalVideoSource;
 // global scope, used to store the recovered audio source
 var recoveredAudioSource;
 
+// global scopre, visitor data
+var visitorData; // should refresh on page/extension reload so we only need this once but needs testing
+
 // get the videoId
 function getVideoIdentifier() {
 	if (document.location.href.includes('.youtube.com/watch?v=')) {
@@ -65,6 +68,7 @@ if (navigator.userAgent.includes('Mobile')) {
 	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 }
 
+/*
 // retrieve video info using custom client data
 async function postJSON() {
   try {
@@ -104,8 +108,71 @@ async function postJSON() {
 			console.log("TAO jsonPlayerInfo response has streams.", jsonPlayerInfo);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
-			console.log("TAO jsonPlayerInfo response has no streams.");
+			console.log("TAO jsonPlayerInfo response has no streams.", jsonPlayerInfo);
 			postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
+		}
+  } catch (error) {
+    console.error("TAO jsonPlayerInfo response Error:", error);
+  }
+}
+*/
+
+// retrieve video info using custom client data
+async function postJSON() {
+  try {
+    const response = await fetch(postJSON_fetchURL, {
+      method: "POST", // or 'PUT'
+      credentials: 'include',
+      mode: 'cors',
+      //credentials: 'include',
+      headers: {
+				'Accept': 'application/json',
+        'Content-Type': "application/json",
+        //'Access-Control-Allow-Origin': '*',
+        //'credentials': "same-origin",
+        //'Cookie': 'VISITOR_INFO1_LIVE=cgR-rSu9S5Q; VISITOR_PRIVACY_METADATA=CgJBUhIEGgAgGw%3D%3D; PREF=f6=40000000&tz=America.Argentina%2FTucuman&f5=30000&f7=140&f4=4010000&guide_collapsed=false&gl=US&repeat=NONE; __Secure-1PSIDTS=sidts-CjIBmiPuTcMwZBuORTJz9yl7RPcXvuqHrk1NE_sBAb1zymHTQ09QoNGrBLlqI4oerhsX8xAA; __Secure-3PSIDTS=sidts-CjIBmiPuTcMwZBuORTJz9yl7RPcXvuqHrk1NE_sBAb1zymHTQ09QoNGrBLlqI4oerhsX8xAA; HSID=AWR83uhWOW1mvLyHA; SSID=ABKyFIxZNiqZIRcUK; APISID=70GlldjQcNYussFL/ABAfFkB5dc4x9HkKC; SAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; __Secure-1PAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; __Secure-3PAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; SID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F4yUiL3gRkOSNL8n7uZqgLggACgYKAdMSARISFQHGX2Miq3dEhE8R1eG3f8CIax727xoVAUF8yKpsU1YjkJsnx8TZFxpWxwN20076; __Secure-1PSID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F44j1pQWuro2IshtT8a4pN1wACgYKAUoSARISFQHGX2MiQ1l9pdkV5AgUVLeY4jHEMBoVAUF8yKrRD8XOclmvQ3vvR6h0Vwnq0076; __Secure-3PSID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F4liohlqFydwcV_qXf2vNSkQACgYKAaMSARISFQHGX2Mi5C3UZZX6tK2A_PRSBYQRwxoVAUF8yKrmqnzQ67g1pnCD032NhFhg0076; LOGIN_INFO=AFmmF2swRgIhAJjr96hHZCPyhLfVoelbWRSuwKRHW3GCkTGUe2CEC2MHAiEAuV8ZBh_F00NJsCFra8k_6pWjhO-kRIbvRk-qcxrUPJ0:QUQ3MjNmd1B2ZDB1RFozc0J4Rlp3S2QyM2wtZW1tSGI3UzJtNndsS0VJVjI3ZG16cnNfNnM1eEhXd0xYejNhdzhncXJ0UDFDWmc1ZWFQeEl5bnRMUWltcFZNOG4tUVJMMjJldXVhV042a0EwWjhkQ1ZWb01BZGhQbGZfaUVXbHhkY0NjLVhJUlJyT2F4dVhEMFRzcGdYWTBhWjhra2JfaEJ3; SIDCC=AKEyXzWJg0xizHOOGf_4dIelUJVZHzvCVGPr9rDcEAz76LbrqBPycB_oEXLzCFBnk8FdZDjF4MtH; __Secure-1PSIDCC=AKEyXzV3txAu-Rhjc4pknCJaKAK47Ou_ILBV0Y11EwTedl6olZUuSqeYG9qAxj0EaKcf8TMl7FA; __Secure-3PSIDCC=AKEyXzU923O6WP7dTBKmYT4XXA7coEwgmPZtkZGHUYRWqQEMZXRaBs4YjQj2gQWJsJb4Eo8q1J4; __Secure-ROLLOUT_TOKEN=CKSt3IyT_ZmZ9QEQzL743cq5igMYoI77yZiNiwM%3D; YSC=1OJGtaZleFM; wide=1',
+        //'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ "context":
+							{ "client":
+								{ 'clientName': 'IOS',
+                'clientVersion': '20.03.02',
+                'deviceMake': 'Apple',
+                'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
+                'osName': 'iPhone',
+                'osVersion': '18.2.1.22C161',
+                'visitorData': visitorData,
+                //'visitorData': visitorData,
+								},
+								//"contentCheckOk": "True",
+								//"racyCheckOk": "True"
+								//"thirdParty": {
+								//	"embedUrl": "https://www.youtube.com"
+								//}
+							},
+							//"serviceIntegrityDimensions": {
+							//	"poToken": "MluhOfPYF2IRfaEBAN4zEj40iwvrHv2JeZmK8V_iQNiRoM59nkk2mnOoxwYf7zCyOg5kDHbvN7_NoHi9exCZHPzgCiquQktUWmraCGZcYXxBeNbdZT-ZhRZtl8hA",
+							//},
+							//"racyCheckOk": "true",
+              //"contentCheckOk": "true",
+							"videoId": clientVideoid}),			
+    });
+
+    jsonPlayerInfo = await response.json();
+    console.log("TAO jsonPlayerInfo response retrieved successfully.");
+    if (jsonPlayerInfo.streamingData) {
+			console.log("TAO jsonPlayerInfo response has streams.", jsonPlayerInfo);
+			setUrl(); // once everything is retrieved we do our logic
+		} else {
+			if ((!visitorData) && (jsonPlayerInfo.responseContext.visitorData)) {
+				visitorData = jsonPlayerInfo.responseContext.visitorData;
+				console.log("TAO trying request with visitorData if available.");
+				postJSON(); // retry with visitorData
+			} else {
+				postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
+			}
+			console.log("TAO jsonPlayerInfo response has no streams but may have visitorData: ", jsonPlayerInfo.responseContext.visitorData);
 		}
   } catch (error) {
     console.error("TAO jsonPlayerInfo response Error:", error);
@@ -128,12 +195,13 @@ async function postJSONsansh() {
       body: JSON.stringify({ "context":
 							{ "client":
 								{ 'clientName': 'IOS',
-                'clientVersion': '19.29.1',
+                'clientVersion': '20.03.02',
                 'deviceMake': 'Apple',
                 'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)',
+                'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
                 'osName': 'iPhone',
-                'osVersion': '17.5.1.21F90'
+                'osVersion': '18.2.1.22C161',
+                'visitorData': visitorData,
 								}
 							},
 							//"serviceIntegrityDimensions": {
@@ -766,6 +834,7 @@ async function setUrl() {
 	if ((audioURL) && (!cipherurl)) { // regular audio stream
 		console.log("TAO using regular audio only stream", audioURL);
 		recoveredAudioSource = audioURL; // making the audio source ready
+		//recoveredAudioSource = decodeURIComponent(audioURL); // making the audio source ready
 		if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
 		playAudioOnly(); // play the audio source
 		//setTimeout(playAudioOnly, 3000); // I need to do better than this but for now it works tm
@@ -779,17 +848,19 @@ async function setUrl() {
 		let signaturecipher = splitedcipherurl[0].slice(2);
 		let signaturespparam = splitedcipherurl[1].slice(3);
 		let signatureurlparam = decodeURIComponent(splitedcipherurl[2].slice(4));
-		//console.log("signaturecipher: ", signaturecipher);
-		//console.log("signaturespparam: ", signaturespparam);
-		//console.log("signatureurlparam: ", signatureurlparam);
+		console.log("signaturecipher: ", signaturecipher);
+		console.log("signaturespparam: ", signaturespparam);
+		console.log("signatureurlparam: ", signatureurlparam);
 		
 		// without base.js we can't decode anything
 		if (!wasBasedotjsRetrieved || !decodedvarb) { // patience
 			//setUrl(); // reboot
 		}
 		
+		// 2025-01 YT completely changed the way the base.js handles the cipher, good luck figuring it out
 		//signaturecipher = encodeURI(signaturecipher);	 //test
 		decodedsig = signaturecipher.split(""); // split before the loop
+		console.log("decodedloopsize: ", decodedloopsize);
 		for (let i = 0; i < decodedloopsize.length -1; i++) {
 			// what should we do?
 			if (decodedchoice[i] == decodedsplice) { // slice
@@ -866,3 +937,91 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
+
+// should revisit this when I have time to improve performance and avoid making an unnecessary extra http request
+/* 
+class ProtoBuilder {
+    constructor() {
+        this.data = {};
+    }
+
+    string(key, value) {
+        this.data[key] = value;
+    }
+
+    varint(key, value) {
+        this.data[key] = value;
+    }
+
+    bytes(key, value) {
+        this.data[key] = value;
+    }
+
+    toBytes() {
+        // Simulate converting the data to bytes (this is a placeholder implementation)
+        return Buffer.from(JSON.stringify(this.data));
+    }
+
+    toUrlencodedBase64() {
+        // Simulate converting the data to URL-encoded Base64
+        const jsonString = JSON.stringify(this.data);
+        const base64 = Buffer.from(jsonString).toString('base64');
+        return encodeURIComponent(base64);
+    }
+}
+
+class RandomStringFromAlphabetGenerator {
+    static generate(alphabet, length, numberGenerator) {
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += alphabet.charAt(numberGenerator.nextInt(alphabet.length));
+        }
+        return result;
+    }
+}
+
+class ContentCountry {
+    constructor(countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    getCountryCode() {
+        return this.countryCode;
+    }
+}
+
+class NumberGenerator {
+    constructor() {
+        // Simulate a random number generator
+    }
+
+    nextInt(max) {
+        return Math.floor(Math.random() * max);
+    }
+}
+
+const CONTENT_PLAYBACK_NONCE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const numberGenerator = new NumberGenerator();
+
+function randomVisitorData(country) {
+    const pbE2 = new ProtoBuilder();
+    pbE2.string(2, "");
+    pbE2.varint(4, numberGenerator.nextInt(255) + 1);
+
+    const pbE = new ProtoBuilder();
+    pbE.string(1, country.getCountryCode());
+    pbE.bytes(2, pbE2.toBytes());
+
+    const pb = new ProtoBuilder();
+    pb.string(1, RandomStringFromAlphabetGenerator.generate(
+        CONTENT_PLAYBACK_NONCE_ALPHABET, 11, numberGenerator));
+    pb.varint(5, Math.floor(Date.now() / 1000) - numberGenerator.nextInt(600000));
+    pb.bytes(6, pbE.toBytes());
+
+    return pb.toUrlencodedBase64();
+}
+
+// Example usage:
+const country = new ContentCountry("US");
+console.log(randomVisitorData(country));
+*/
