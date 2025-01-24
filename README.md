@@ -13,7 +13,6 @@
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream, until it does (and also depending if you have autoplay enabled or not) it may render the video first but just for a brief moment.
 
 ### Install it directly from Mozilla [here](https://addons.mozilla.org/en-US/firefox/addon/tube-audio-options/).
-**NOTE**: If the currently uploaded mobile AMO version is not working as expected try installing manually the v0.19 release from here on github that uses a different logic, it's signed by Mozilla.
 
 ---
 
