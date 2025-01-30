@@ -40,10 +40,10 @@ var originalVideoSource;
 // global scope, used to store the recovered audio source
 var recoveredAudioSource;
 
-// global scopre, visitor data
+// global scope, visitor data
 var visitorData; // should refresh on page/extension reload so we only need this once but needs testing
 
-// global scopre, potoken
+// global scope, potoken
 var poToKen;
 
 // get the videoId
@@ -99,7 +99,6 @@ async function postJSON() {
                 'osName': 'iPhone',
                 'osVersion': '18.2.1.22C161',
                 'visitorData': visitorData,
-                //'visitorData': visitorData,
 								},
 								//"contentCheckOk": "True",
 								//"racyCheckOk": "True"
@@ -186,7 +185,7 @@ async function postJSONsansh() {
 			console.log("TAO jsonPlayerInfo (s&sh topics) response has no streams.");
 		}
   } catch (error) {
-    console.error("TAO jsonPlayerInfo (s&sh topics) response Error:", error);
+			console.error("TAO jsonPlayerInfo (s&sh topics) response Error:", error);
   }
 }
 
