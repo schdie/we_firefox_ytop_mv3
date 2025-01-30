@@ -894,7 +894,7 @@ function disableAndroidAutoPause() {
 			//console.log("TAO a confirm dialog appears after a player pause.");
 			if ((confirmbutton) && (confirmbutton.length >= 1)) {
 				for (let i = 0; i < confirmdialog.length; i++) {
-					if (document.getElementsByClassName('dialog-flex-button')[i].innerText != "") {
+					if (confirmbutton[i].innerText) {
 						console.log("TAO auto-clicked button for: Video paused. Continue watching?");
 						confirmbutton[i].click();
 					}
