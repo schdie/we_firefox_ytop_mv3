@@ -43,6 +43,9 @@ var recoveredAudioSource;
 // global scopre, visitor data
 var visitorData; // should refresh on page/extension reload so we only need this once but needs testing
 
+// global scopre, potoken
+var poToKen;
+
 // get the videoId
 function getVideoIdentifier() {
 	if (document.location.href.includes('.youtube.com/watch?v=')) {
@@ -63,59 +66,12 @@ var postJSON_fetchURL;
 if (navigator.userAgent.includes('Mobile')) {
 	console.log("TAO running on mobile device.")
 	postJSON_fetchURL = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+	console.log("TAO enabling background playback")
+	backgroundPlayAndroid();
 } else {
 	console.log("TAO running on desktop.")
 	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 }
-
-/*
-// retrieve video info using custom client data
-async function postJSON() {
-  try {
-    const response = await fetch(postJSON_fetchURL, {
-      method: "POST", // or 'PUT'
-      mode: 'cors',
-      headers: {
-				'Accept': 'application/json',
-        'Content-Type': "application/json",
-        'Access-Control-Allow-Origin': '*',
-        'credentials': "same-origin",
-      },
-      body: JSON.stringify({ "context":
-							{ "client":
-								{ 'clientName': 'IOS',
-                'clientVersion': '19.29.1',
-                'deviceMake': 'Apple',
-                'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)',
-                'osName': 'iPhone',
-                'osVersion': '17.5.1.21F90'
-								},
-								//"contentCheckOk": "True",
-								//"racyCheckOk": "True"
-								//"thirdParty": {
-								//	"embedUrl": "https://www.youtube.com"
-								//}
-							},
-							//"racyCheckOk": "true",
-              //"contentCheckOk": "true",
-							"videoId": clientVideoid}),			
-    });
-
-    jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo response retrieved successfully.");
-    if (jsonPlayerInfo.streamingData) {
-			console.log("TAO jsonPlayerInfo response has streams.", jsonPlayerInfo);
-			setUrl(); // once everything is retrieved we do our logic
-		} else {
-			console.log("TAO jsonPlayerInfo response has no streams.", jsonPlayerInfo);
-			postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
-		}
-  } catch (error) {
-    console.error("TAO jsonPlayerInfo response Error:", error);
-  }
-}
-*/
 
 // retrieve video info using custom client data
 async function postJSON() {
@@ -152,7 +108,7 @@ async function postJSON() {
 								//}
 							},
 							//"serviceIntegrityDimensions": {
-							//	"poToken": "MluhOfPYF2IRfaEBAN4zEj40iwvrHv2JeZmK8V_iQNiRoM59nkk2mnOoxwYf7zCyOg5kDHbvN7_NoHi9exCZHPzgCiquQktUWmraCGZcYXxBeNbdZT-ZhRZtl8hA",
+							//	"poToken": poToKen,
 							//},
 							//"racyCheckOk": "true",
               //"contentCheckOk": "true",
@@ -205,7 +161,7 @@ async function postJSONsansh() {
 								}
 							},
 							//"serviceIntegrityDimensions": {
-							//	"poToken": "MnTL88XvSRsk9svLt6Z89-OuRL2Epp3b-W9hli5NpOMvC8rI7urohSKga48cq8GuaqedsvBCGdWoFBJccOczlKeKcSnf-uphk9uOuxglGFrngE4I5sflG689GNXJ9qJJuvhpppYJ2-wdBQWKQU_GclstvTwMmw=="
+							//	"poToken": poToKen,
 							//},
 							"thirdParty": {
 									"embedUrl": "https://www.youtube.com"
@@ -572,9 +528,12 @@ async function monitorForClicksMobile() {
 
 // on document load only, mostly executed only once since yt is a dynamic website
 document.addEventListener("DOMContentLoaded", function(){
-	if (!document.location.href.includes('m.youtube.com/watch?')) {
-		setInterval(() => window._lact = Date.now(), 600000); // for "Are You Still There?", every ~10min
+	if (!document.location.href.includes('m.youtube.com')) {
+		setInterval(() => window._lact = Date.now(), 600000); // bypass for "Are You Still There?" on desktop
 		console.log("TAO Are You Still There? fix for desktop.");
+	} else {
+		disableAndroidAutoPause();	// bypass for "Video paused. Continue watching?" on android
+		console.log("TAO Video paused. Continue watching? fix for android.");
 	}
 	//getbasejs(); // try to get the base.js for later if needed
 	//postJSON(data);
@@ -675,7 +634,7 @@ window.addEventListener("load", () => {
 });
 
 // if permissions are removed we politely remind the user
-chrome.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message) => {
 	if (message.weneedpermissions) {
 		console.log("we need permissions!");
 		if (document.location.href.includes('.youtube.com/')) {
@@ -899,29 +858,51 @@ async function setUrl() {
 // disable page-focus on mobile firefox to allow background play
 // original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
 // https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
+function backgroundPlayAndroid() {
+	// visibilitychange events are captured and stopped 
+	document.addEventListener("visibilitychange", function(e) {
+		e.stopImmediatePropagation();
+	}, true);
 
-// visibilitychange events are captured and stopped 
-document.addEventListener("visibilitychange", function(e) {
-	e.stopImmediatePropagation();
-}, true);
+	// document.visibilityState always returns false
+	Object.defineProperty(Document.prototype, "hidden", {
+		get: function hidden() {
+			return false;
+		},
+		enumerable: true,
+		configurable: true
+	});
 
-// document.visibilityState always returns false
-Object.defineProperty(Document.prototype, "hidden", {
-	get: function hidden() {
-		return false;
-	},
-	enumerable: true,
-	configurable: true
-});
+	// document.visibilityState always returns "visible"
+	Object.defineProperty(Document.prototype, "visibilityState", {
+		get: function visibilityState() {
+			return "visible";
+		},
+		enumerable: true,
+		configurable: true
+	});
+}
 
-// document.visibilityState always returns "visible"
-Object.defineProperty(Document.prototype, "visibilityState", {
-	get: function visibilityState() {
-		return "visible";
-	},
-	enumerable: true,
-	configurable: true
-});
+// attempts to bypass yt unwanted video pauses
+function disableAndroidAutoPause() {
+	document.addEventListener('pause', function(e) {
+		//console.log("TAO player is paused.");
+		let confirmdialog = document.getElementsByClassName('confirm-dialog-messages');
+		let confirmbutton = document.getElementsByClassName('dialog-flex-button');
+		
+		if ((confirmdialog) && (confirmdialog.length >= 1)) {
+			//console.log("TAO a confirm dialog appears after a player pause.");
+			if ((confirmbutton) && (confirmbutton.length >= 1)) {
+				for (let i = 0; i < confirmdialog.length; i++) {
+					if (document.getElementsByClassName('dialog-flex-button')[i].innerText != "") {
+						console.log("TAO auto-clicked button for: Video paused. Continue watching?");
+						confirmbutton[i].click();
+					}
+				}
+			}
+		}
+	}, true);
+}
 
 // our cloned version of the yt cipherSignature
 var cipherTools = {
@@ -937,91 +918,3 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
-
-// should revisit this when I have time to improve performance and avoid making an unnecessary extra http request
-/* 
-class ProtoBuilder {
-    constructor() {
-        this.data = {};
-    }
-
-    string(key, value) {
-        this.data[key] = value;
-    }
-
-    varint(key, value) {
-        this.data[key] = value;
-    }
-
-    bytes(key, value) {
-        this.data[key] = value;
-    }
-
-    toBytes() {
-        // Simulate converting the data to bytes (this is a placeholder implementation)
-        return Buffer.from(JSON.stringify(this.data));
-    }
-
-    toUrlencodedBase64() {
-        // Simulate converting the data to URL-encoded Base64
-        const jsonString = JSON.stringify(this.data);
-        const base64 = Buffer.from(jsonString).toString('base64');
-        return encodeURIComponent(base64);
-    }
-}
-
-class RandomStringFromAlphabetGenerator {
-    static generate(alphabet, length, numberGenerator) {
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += alphabet.charAt(numberGenerator.nextInt(alphabet.length));
-        }
-        return result;
-    }
-}
-
-class ContentCountry {
-    constructor(countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    getCountryCode() {
-        return this.countryCode;
-    }
-}
-
-class NumberGenerator {
-    constructor() {
-        // Simulate a random number generator
-    }
-
-    nextInt(max) {
-        return Math.floor(Math.random() * max);
-    }
-}
-
-const CONTENT_PLAYBACK_NONCE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-const numberGenerator = new NumberGenerator();
-
-function randomVisitorData(country) {
-    const pbE2 = new ProtoBuilder();
-    pbE2.string(2, "");
-    pbE2.varint(4, numberGenerator.nextInt(255) + 1);
-
-    const pbE = new ProtoBuilder();
-    pbE.string(1, country.getCountryCode());
-    pbE.bytes(2, pbE2.toBytes());
-
-    const pb = new ProtoBuilder();
-    pb.string(1, RandomStringFromAlphabetGenerator.generate(
-        CONTENT_PLAYBACK_NONCE_ALPHABET, 11, numberGenerator));
-    pb.varint(5, Math.floor(Date.now() / 1000) - numberGenerator.nextInt(600000));
-    pb.bytes(6, pbE.toBytes());
-
-    return pb.toUrlencodedBase64();
-}
-
-// Example usage:
-const country = new ContentCountry("US");
-console.log(randomVisitorData(country));
-*/
