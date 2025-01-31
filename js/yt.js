@@ -882,25 +882,46 @@ function backgroundPlayAndroid() {
 	});
 }
 
-// attempts to bypass yt unwanted video pauses
+// attempts to bypass yt unwanted video pauses for mobile
 function disableAndroidAutoPause() {
 	document.addEventListener('pause', function(e) {
-		//console.log("TAO player is paused.");
-		let confirmdialog = document.getElementsByClassName('confirm-dialog-messages');
-		let confirmbutton = document.getElementsByClassName('dialog-flex-button');
+		console.log("TAO player is paused.");
+		//let confirmdialog = document.getElementsByClassName('confirm-dialog-messages');
+		let videoPausedConfirmButton = document.getElementsByClassName('dialog-flex-button'); // "Video paused. Continue watching?"
+		let stillWatchingConfirmButton = document.getElementsByClassName('notification-action-response-text'); // "Still watching? Video will pause soon"
 		
-		if ((confirmdialog) && (confirmdialog.length >= 1)) {
-			//console.log("TAO a confirm dialog appears after a player pause.");
-			if ((confirmbutton) && (confirmbutton.length >= 1)) {
-				//console.log("TAO a confirm button appears after a player pause ", confirmbutton);
-				for (let i = 0; i < confirmbutton.length; i++) {
-					if (confirmbutton[i].innerText) {
-						console.log("TAO auto-clicked button for: Video paused. Continue watching?");
-						confirmbutton[i].click();
-					}
+		/*
+		for (let y = 0; y < confirmdialog.length; y++) {
+			console.log("TAO preif a confirmdialog appears after a player pause: " + y, confirmdialog[y]);
+		}
+		
+		for (let z = 0; z < videoPausedConfirmButton.length; z++) {
+			console.log("TAO preif a confirmbutton appears after a player pause: " + z, videoPausedConfirmButton[z]);
+		}
+		
+		for (let w = 0; w < stillWatchingConfirmButton.length; w++) {
+			console.log("TAO preif a stillWatchingConfirmButton appears after a player pause: " + w, stillWatchingConfirmButton[w]);
+			console.log("TAO preif a stillWatchingConfirmButton appears after a player pause length: " + w, stillWatchingConfirmButton[w].length);
+		}
+		*/
+
+		// workaround for "Still watching? Video will pause soon"
+		if (stillWatchingConfirmButton.length > 0) {
+			document.dispatchEvent( new KeyboardEvent( 'keyup', { bubbles: true, cancelable: true, keyCode: 143, which: 143 } ) );
+			console.log("TAO stillWatchingConfirmButton appears after a player pause, keyup event triggered.", stillWatchingConfirmButton);
+		}
+		
+		// workaround for "Video paused. Continue watching?"
+		if ((videoPausedConfirmButton) && (videoPausedConfirmButton.length >= 1)) {
+			console.log("TAO videoPausedConfirmButton appears after a player pause: ", videoPausedConfirmButton);
+			for (let i = 0; i < videoPausedConfirmButton.length; i++) {
+				if (videoPausedConfirmButton[i].innerText) {
+					console.log("TAO auto-clicked videoPausedConfirmButton: " + i, videoPausedConfirmButton[i]);
+					videoPausedConfirmButton[i].click();
 				}
 			}
 		}
+			
 	}, true);
 }
 
