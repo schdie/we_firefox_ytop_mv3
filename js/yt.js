@@ -1,17 +1,28 @@
 //'use strict';
 
-/*
-old message:
-I tried several approaches and I feel this is the best option when using the website.
-It is not the cleanest but requires the least amount of code.
-We don't have to deal with ciphers and it's probably the most resistant to YT changes.
-new message:
-About that "best option" comment I think google had other ideas all along...
-*/
-
-// global scope, API request
+// global scope, saved JSON response from video info request
 var jsonPlayerInfo;
-var clientVideoid;
+
+// global scope, to avoid cors choose the correct API key
+var API_KEY;
+
+// global scope, the current video_id value
+var CLIENT_VIDEO_ID; 
+
+// global scope, used to check if audioonly is enabled or not "currently"
+var AUDIO_ONLY_ENABLED;
+
+// global scope, used to store original audio+video source
+var VIDEO_SOURCE;
+
+// global scope, used to store the recovered audio source
+var AUDIO_SOURCE;
+
+// global scope, visitor data
+var VISITOR_DATA; // should refresh on page/extension reload, needed once
+
+// global scope, poToKen
+var POTOKEN;
 
 // global scope, used to check if we already got the base.js file
 var wasBasedotjsRetrieved;
@@ -31,52 +42,81 @@ var decodedsig;
 // decrypt the signatureCipher
 var basejscipherfunction;
 
-// global scope, used to check if audioonly is enabled or not "currently"
-var isAudioEnabledfromStorage;
+// ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
-// global scope, used to store original audio+video source
-var originalVideoSource;
+// get the stored value of audioonly and set the AUDIO_ONLY_ENABLED var
+async function getStoredValues() {
+	const {audioonly} = await browser.storage.local.get('audioonly');
 
-// global scope, used to store the recovered audio source
-var recoveredAudioSource;
-
-// global scope, visitor data
-var visitorData; // should refresh on page/extension reload so we only need this once but needs testing
-
-// global scope, potoken
-var poToKen;
-
-// get the videoId
-function getVideoIdentifier() {
-	if (document.location.href.includes('.youtube.com/watch?v=')) {
-		clientVideoid = document.location.href.split('.youtube.com/watch?v=')[1];
-		if (clientVideoid.length === 11) { // just in case we are in playlist or something
-		} else {
-			clientVideoid = clientVideoid.split('&')[0];
-		}
-	console.log("TAO clientVideoid: ", clientVideoid);
+  if (audioonly === 1) {
+		console.log("TAO | Startup: audioonly is enabled.");
+		AUDIO_ONLY_ENABLED = 1;
+	} else {
+		AUDIO_ONLY_ENABLED = 0;
+		console.log("TAO | Startup: audioonly is disabled.");
 	}
 }
 
-getVideoIdentifier();
+getStoredValues(); // this should be one of the first things to execute
 
-// to avoid cors the fetch url needs to change accordingly
-var postJSON_fetchURL;
-
-if (navigator.userAgent.includes('Mobile')) {
-	console.log("TAO running on mobile device.")
-	postJSON_fetchURL = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-	console.log("TAO enabling background playback")
-	backgroundPlayAndroid();
-} else {
-	console.log("TAO running on desktop.")
-	postJSON_fetchURL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+// sets the API key and countermeasures
+function runningDevice() {
+	if (navigator.userAgent.includes('Mobile')) {
+		console.log("TAO | Running on mobile device, setting API_KEY and countermeasures.")
+		API_KEY = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		countermeasures_android();
+	} else {
+		console.log("TAO | Running on desktop, setting API_KEY and countermeasures.")
+		API_KEY = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		countermeasures_desktop();
+	}
 }
+
+runningDevice();
+
+// video player status
+async function onVideoPlaybackStartup() {
+
+	while(!document.getElementById('movie_player')) {
+		await new Promise(r => requestAnimationFrame(r));
+	}
+	
+	let currentVideoPlayer = document.getElementById('movie_player').wrappedJSObject;
+	
+	document.addEventListener('playing', function(e) {
+		console.log("TAO | Video player started playback.");
+
+		console.log("TAO | CLIENT_VIDEO_ID old: ", CLIENT_VIDEO_ID);
+		console.log("TAO | CLIENT_VIDEO_ID new: ", currentVideoPlayer.getVideoData().video_id);
+		
+		if (CLIENT_VIDEO_ID != currentVideoPlayer.getVideoData().video_id) { // compare current video_id to previously saved video_id if any
+			console.log("TAO | New video detected, retrieving data...");
+			CLIENT_VIDEO_ID = currentVideoPlayer.getVideoData().video_id;
+			postJSON(); // if video_id's differ try to retrieve the audio source for the new video_id
+		} else {
+			console.log("TAO | Previous saved video id hasn't changed.");
+			/*
+			let videoElement = document.getElementsByClassName('video-stream')[0];
+			// for some rare cases (autoplay mostly) we should check if audio only is enabled and if the url is the right one
+			if (AUDIO_ONLY_ENABLED === 1 && videoElement.src.indexOf("blob:") >= 0) {
+				videoElement.src = AUDIO_SOURCE;
+				videoElement.play();
+				console.log("TAO | Looks like audioonly is enabled but the source of the video did not change");
+			}
+			*/
+		}
+		
+	}, true);
+
+}
+
+onVideoPlaybackStartup();
 
 // retrieve video info using custom client data
 async function postJSON() {
   try {
-    const response = await fetch(postJSON_fetchURL, {
+    const response = await fetch(API_KEY, {
       method: "POST", // or 'PUT'
       credentials: 'include',
       mode: 'cors',
@@ -98,7 +138,7 @@ async function postJSON() {
                 'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
                 'osName': 'iPhone',
                 'osVersion': '18.2.1.22C161',
-                'visitorData': visitorData,
+                'visitorData': VISITOR_DATA,
 								},
 								//"contentCheckOk": "True",
 								//"racyCheckOk": "True"
@@ -107,37 +147,39 @@ async function postJSON() {
 								//}
 							},
 							//"serviceIntegrityDimensions": {
-							//	"poToken": poToKen,
+							//	"poToken": POTOKEN,
 							//},
 							//"racyCheckOk": "true",
               //"contentCheckOk": "true",
-							"videoId": clientVideoid}),			
+							"videoId": CLIENT_VIDEO_ID}),			
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo response retrieved successfully.");
+    console.log("TAO | jsonPlayerInfo response retrieved successfully.");
     if (jsonPlayerInfo.streamingData) {
-			console.log("TAO jsonPlayerInfo response has streams.", jsonPlayerInfo);
+			console.log("TAO | jsonPlayerInfo response has streams.");
+			//console.log("TAO | jsonPlayerInfo response has streams.", jsonPlayerInfo);
+			//console.log("TAO | jsonPlayerInfo response has streams.", jsonPlayerInfo.videoDetails.videoId);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
-			if ((!visitorData) && (jsonPlayerInfo.responseContext.visitorData)) {
-				visitorData = jsonPlayerInfo.responseContext.visitorData;
-				console.log("TAO trying request with visitorData if available.");
+			if ((!VISITOR_DATA) && (jsonPlayerInfo.responseContext.visitorData)) {
+				VISITOR_DATA = jsonPlayerInfo.responseContext.visitorData;
+				console.log("TAO | Retrying request with visitorData if available.");
 				postJSON(); // retry with visitorData
 			} else {
 				postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
 			}
-			console.log("TAO jsonPlayerInfo response has no streams but may have visitorData: ", jsonPlayerInfo.responseContext.visitorData);
+			console.log("TAO | jsonPlayerInfo response has no streams but may have visitorData: ", jsonPlayerInfo.responseContext.visitorData);
 		}
   } catch (error) {
-    console.error("TAO jsonPlayerInfo response Error:", error);
+    console.error("TAO | jsonPlayerInfo response Error:", error);
   }
 }
 
 // retrieve video info using custom client data for self harm warning videos
 async function postJSONsansh() {
   try {
-    const response = await fetch(postJSON_fetchURL, {
+    const response = await fetch(API_KEY, {
       method: "POST", // or 'PUT'
       mode: 'cors',
       credentials: 'include',
@@ -156,11 +198,11 @@ async function postJSONsansh() {
                 'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
                 'osName': 'iPhone',
                 'osVersion': '18.2.1.22C161',
-                'visitorData': visitorData,
+                'visitorData': VISITOR_DATA,
 								}
 							},
 							//"serviceIntegrityDimensions": {
-							//	"poToken": poToKen,
+							//	"poToken": POTOKEN,
 							//},
 							"thirdParty": {
 									"embedUrl": "https://www.youtube.com"
@@ -172,38 +214,23 @@ async function postJSONsansh() {
 							//		"signatureTimestamp": "19997"
 							//	}
 							//},
-							"videoId": clientVideoid}),				
+							"videoId": CLIENT_VIDEO_ID}),				
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO jsonPlayerInfo (s&sh topics) response retrieved successfully.");
+    console.log("TAO | jsonPlayerInfo (s&sh topics) response retrieved successfully.");
     if (jsonPlayerInfo.streamingData) {
-			console.log("TAO jsonPlayerInfo (s&sh topics) response has streams.", jsonPlayerInfo);
-			console.log("TAO jsonPlayerInfo (s&sh topics) visitorData:", jsonPlayerInfo.responseContext.visitorData);
+			console.log("TAO | jsonPlayerInfo (s&sh topics) response has streams.");
+			//console.log("TAO | jsonPlayerInfo (s&sh topics) response has streams.", jsonPlayerInfo);
+			//console.log("TAO | jsonPlayerInfo (s&sh topics) visitorData:", jsonPlayerInfo.responseContext.visitorData);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
-			console.log("TAO jsonPlayerInfo (s&sh topics) response has no streams.");
+			console.log("TAO | jsonPlayerInfo (s&sh topics) response has no streams.");
 		}
   } catch (error) {
-			console.error("TAO jsonPlayerInfo (s&sh topics) response Error:", error);
+			console.error("TAO | jsonPlayerInfo (s&sh topics) response Error:", error);
   }
 }
-
-// get the stored value of audioonly and set the isAudioEnabledfromStorage var
-async function getStoredValues() {
-	const {audioonly} = await browser.storage.local.get('audioonly');
-
-  if (audioonly === 1) {
-		console.log("TAO startup: audioonly is enabled.");
-		isAudioEnabledfromStorage = 1;
-	} else {
-		isAudioEnabledfromStorage = 0;
-		console.log("TAO startup: audioonly is disabled.");
-	}
-}
-
-// this should be one of the first things to execute
-getStoredValues();
 
 // enables audio only in storage
 async function storEnableAudioOnly() {
@@ -219,19 +246,36 @@ async function storDisableAudioOnly() {
 
 // function to play only audio
 async function playAudioOnly() {
-	console.log("TAO playAudioOnly called: " + recoveredAudioSource);
+	console.log("TAO | playAudioOnly called: " + AUDIO_SOURCE);
+	if (AUDIO_ONLY_ENABLED !== 1) { return }; // only change to audio only if the toggle is enabled
+
 	const videoElement = document.getElementsByClassName('video-stream')[0];
 	let cTime = videoElement.currentTime; // save the current video player time
 	
 	// brute-forcing our way
 	async function playVideo() {
+		
+	if (navigator.getAutoplayPolicy("mediaelement") === "allowed") { // checking autoplay
+		console.log('TAO | Autoplay is allowed.');
+		// Create and play a new media element.
+		} else if (navigator.getAutoplayPolicy("mediaelement") === "allowed-muted") {
+			console.log('TAO | Autoplay is allowed while muted.');
+			// Create a new media element, and play it in muted.
+		} else {
+			// Autoplay is disallowed, maybe show a poster instead.
+			console.log('TAO | Autoplay is NOT allowed!');
+		}
+		
 		try {
 			await videoElement.play();
 			videoElement.fastSeek(cTime,true);
-			console.log("TAO playAudioOnly current time: ", cTime);
+			console.log("TAO | playAudioOnly current time: ", cTime);
 		} catch (err) {
 			console.log("err ", err);
-			//playAudioOnly(); // reset
+
+			setTimeout(function(){ // fixes the high cpu usage when autoplay is disabled
+				videoElement.fastSeek(0,true);
+			},2000);
 		}
 	}
 
@@ -241,88 +285,40 @@ async function playAudioOnly() {
 		playPromise.then(_ => {
 			videoElement.pause();
 			
-			if (videoElement.src.indexOf("blob:") >= 0) { originalVideoSource = videoElement.src; } // needed when: there's no autoplay, video started without audio-only, the user switched to video again
-						
-			//videoElement.setAttribute("src", recoveredAudioSource);
-			videoElement.src = recoveredAudioSource;
+			if (videoElement.src.indexOf("blob:") >= 0) { VIDEO_SOURCE = videoElement.src; } // needed when: there's no autoplay, video started without audio-only, the user switched to video again
+			
+			videoElement.src = AUDIO_SOURCE;		
 			//setCurrentTime();
 			playVideo();
-			console.log("TAO playAudioOnly playPromise started with no errors", videoElement.src);
-			setTimeout(checksrc, 300); // re-check src is our audio only stream because while testing this was not always the case
-			console.log("TAO calling checksrc from playAudioOnly");
+			console.log("TAO | playAudioOnly playPromise started with no errors", videoElement.src);
 		})
 		.catch(error => {
-			console.log("TAO playAudioOnly playPromise did not start, error: ", error);
-			return playAudioOnly();
+			console.log("TAO | playAudioOnly playPromise did not start, error: ", error);
+			
+			// fix when autoplay is not enabled and audio only was requested before the video ever played
+			if (videoElement.src.indexOf("blob:") >= 0) {
+				videoElement.src = AUDIO_SOURCE;
+				setTimeout(function(){
+					videoElement.fastSeek(0,true);
+				},2000);
+			}
+			
+			return;
+			//return playAudioOnly();
 		});
 	}
 }
 
-// used to check if yt doesn't change the source in the first ~5 seconds
-function checksrc(repeats = 7) {
-	if (isAudioEnabledfromStorage === 0) { return; } // fix possible race condition bug
-  if (repeats > 0) {
-		const videoElement = document.getElementsByClassName('video-stream')[0];
-		console.log("TAO checksrc exec: ", repeats);
-		if (videoElement.src.indexOf("blob:") >= 0) { // request audio only again;
-			console.log("TAO src changed, calling playAudioOnly again.");
-			return playAudioOnly(); // bail here 
-		}
-  }
-  setTimeout(() => checksrc(repeats - 1), 700);
-}
-
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
-	console.log("TAO playVideoWithAudio called: " + originalVideoSource);
+	console.log("TAO playVideoWithAudio called: " + VIDEO_SOURCE);
 	const videoElement = document.getElementsByTagName('video')[0];
 	console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
-	videoElement.src = originalVideoSource;
+	videoElement.src = VIDEO_SOURCE;
 	videoElement.fastSeek(videoElement.currentTime,true); // set current time
 	//setCurrentTime();
 	videoElement.play();
 }
-
-/*
-// get the current time of the player to allow for a seamless switch
-function setCurrentTime() {
-	// desktop
-	if (!document.location.href.includes('m.youtube.com/watch?')) {
-		// find the video element
-		const videoElement = document.getElementsByTagName('video')[0];
-		// save the current player time
-		let currentTime = document.getElementsByClassName("ytp-time-current")[0];
-		// convert the time into seconds
-		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-		// set the current time for the video element
-		videoElement.currentTime = currentTimeSeconds;
-		//videoElement.setAttribute("currentTime", currentTimeSeconds);
-	} else { // mobile
-		// find the video element
-		const videoElement = document.getElementsByTagName('video')[0];
-		
-		// this works when switching because the time is usually not 0
-		//let currentTimeSwitch = document.getElementsByClassName('time-first')[0];
-		let currentTimeSwitch = videoElement.currentTime;
-		console.log("mobile!, currentTimeSwitch: ", document.getElementsByTagName('video')[0].currentTime);
-		if ((currentTimeSwitch) && currentTimeSwitch.textContent !== "0:00") {
-			let currentTimeSwitchSeconds = +(currentTimeSwitch.textContent.split(':').reduce((acc,time) => (60 * acc) + +time));
-			//videoElement.currentTime = currentTimeSwitchSeconds;
-			videoElement.fastSeek(currentTimeSwitchSeconds,true);
-		} else { // this is hacky at best, if time is zero but the url has a timestamp we use that
-			// get the time from href
-			let urlTime = document.location.href.split('&t=');
-			// only when there may be some time
-			if (urlTime.length >= 2) {
-				//let mobTime = Number(urlTime[1].slice(0, -1)); // for some reason it needs to be a string and not a number
-				let mobTime = urlTime[1].split('s');
-				// set the current time for the video element
-				videoElement.currentTime = mobTime[0];
-			}
-		}
-	}
-}
-*/
 
 // function to create our audioonly div
 async function createAudioDiv() {
@@ -351,12 +347,12 @@ async function createAudioDiv() {
 		let audiotdiv = document.createElement("div");
 		
 		// sometimes there's a race condition at startup, this fixes that
-		while(isAudioEnabledfromStorage == null) {
+		while(AUDIO_ONLY_ENABLED == null) {
 			await new Promise(r => requestAnimationFrame(r));
 		}
 
 		// check the initial state our div should have
-		if (isAudioEnabledfromStorage === 1) {
+		if (AUDIO_ONLY_ENABLED === 1) {
 			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
 		} else {
 			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
@@ -406,7 +402,7 @@ async function createAudioDiv() {
 		mobileFloatButton.setAttribute("class", "float");
 
 		// check the initial state our button should have
-		if (isAudioEnabledfromStorage === 1) {
+		if (AUDIO_ONLY_ENABLED === 1) {
 			mobileFloatButton.style.background = "#F24033";
 			mobileFloatButton.setAttribute("aria-pressed", "true");
 			mobileFloatButton.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg>';
@@ -428,19 +424,19 @@ async function createAudioDiv() {
 async function monitorForClicks() {
 	// monitor our div
 	document.getElementById('audioonly').addEventListener("click", function (e) {
-		// set isAudioEnabledfromStorage and save it to storage
-		if (isAudioEnabledfromStorage === 1) {
-			isAudioEnabledfromStorage = 0;
+		// set AUDIO_ONLY_ENABLED and save it to storage
+		if (AUDIO_ONLY_ENABLED === 1) {
+			AUDIO_ONLY_ENABLED = 0;
 			storDisableAudioOnly();
 		} else {
-			isAudioEnabledfromStorage = 1;
+			AUDIO_ONLY_ENABLED = 1;
 			storEnableAudioOnly();
 		}
 
 		// set the audioonly div to enabled/disabled
 		if (this.getAttribute("aria-pressed") == "false") {
 			this.setAttribute("aria-pressed", "true");
-			if (recoveredAudioSource) {
+			if (AUDIO_SOURCE) {
 				playAudioOnly(); // play the saved audio source
 			} else {
 				setUrl(); // find the audio only streams
@@ -457,6 +453,7 @@ async function monitorForClicks() {
 		setTimeout(function(){
 			document.getElementById("audioonly").disabled = false;
 		},1700);
+		
 	});
 	
 	// sometimes the user may click on a video resolution from the quality menu to leave "audio only" mode, so...
@@ -480,8 +477,8 @@ async function monitorForClicks() {
 				document.getElementById('audioonly').setAttribute("aria-pressed", "false");
 				// set audioonly storage to false
 				storDisableAudioOnly();
-				// set isAudioEnabledfromStorage var
-				isAudioEnabledfromStorage = 0;
+				// set AUDIO_ONLY_ENABLED var
+				AUDIO_ONLY_ENABLED = 0;
 				// request to play video+audio
 				playVideoWithAudio();
 			}
@@ -493,12 +490,12 @@ async function monitorForClicks() {
 async function monitorForClicksMobile() {
 	// monitor our mobile button
 	document.getElementById('audioonlym').addEventListener("click", function (e) {
-		// set isAudioEnabledfromStorage and save it to storage
-		if (isAudioEnabledfromStorage === 1) {
-			isAudioEnabledfromStorage = 0;
+		// set AUDIO_ONLY_ENABLED and save it to storage
+		if (AUDIO_ONLY_ENABLED === 1) {
+			AUDIO_ONLY_ENABLED = 0;
 			storDisableAudioOnly();
 		} else {
-			isAudioEnabledfromStorage = 1;
+			AUDIO_ONLY_ENABLED = 1;
 			storEnableAudioOnly();
 		}
 		
@@ -507,8 +504,7 @@ async function monitorForClicksMobile() {
 			this.setAttribute("style", "background-color:#F24033");
 			this.setAttribute("aria-pressed", "true");
 			this.innerHTML = '<svg height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg>';
-			// and request to play audio only
-			playAudioOnly();
+			playAudioOnly(); // and request to play audio only
 		} else {
 			this.setAttribute("style", "background-color:#DDDDDD");
 			this.setAttribute("aria-pressed", "false");
@@ -522,25 +518,13 @@ async function monitorForClicksMobile() {
 		setTimeout(function(){
 			document.getElementById("audioonlym").disabled = false;
 		},1700);
+		
 	});
 }
 
 // on document load only, mostly executed only once since yt is a dynamic website
-document.addEventListener("DOMContentLoaded", function(){
-	if (!document.location.href.includes('m.youtube.com')) {
-		setInterval(() => window._lact = Date.now(), 600000); // bypass for "Are You Still There?" on desktop
-		console.log("TAO Are You Still There? fix for desktop.");
-	} else {
-		disableAndroidAutoPause();	// bypass for "Video paused. Continue watching?" on android
-		console.log("TAO Video paused. Continue watching? fix for android.");
-	}
-	//getbasejs(); // try to get the base.js for later if needed
-	//postJSON(data);
-	if (document.location.href.includes('.youtube.com/watch?')) { // if it's a video page only
-		console.log("TAO calling only once: getbasejs and createAudioDiv");
-		//postJSON(); // get client info
-		createAudioDiv(); // create the div for the user interface
-	}
+document.addEventListener("DOMContentLoaded", function() {
+	createAudioDiv(); // always create our div after the DOM is done
 });
 
 // find the current base.js in use
@@ -600,38 +584,6 @@ async function getbasejs() {
 	}
 }
 
-// looking for url changes (not the best idea to use MutationObserver for this but on ff it seems to be the best option)
-// for chrome navigation.addEventListener seems a better solution
-// document title seems to be more consistent than document.location.href but still not good enough, yt changes the document title every time it changes to a new video
-// unless the video has the exact same title name? and/or you get a notification
-window.addEventListener("load", () => {
-  let oldHref;
-  const body = document.querySelector("body");
-  const observer = new MutationObserver(mutations => {
-		//if (oldHref !== document.location.href && document.location.href.includes('.youtube.com/watch?')) {
-		if ((oldHref !== document.location.href.split('#')[0]) && (document.location.href.includes('.youtube.com/watch?') || document.location.href.includes('m.youtube.com/watch?'))) {	
-			recoveredAudioSource = null; // clean recoveredAudioSource to avoid some very bizarre mixing of incorrect audio and video
-			oldHref = document.location.href; // what's new is old
-
-			getVideoIdentifier(); // on url change get the new videoId
-			postJSON(); // retrieve the video data
-			//postJSONagerestricted(); //testing
-      console.log("TAO (url change), not on main page: " + oldHref);
-
-			// try to create our div if not already
-			createAudioDiv();
-    } else if (document.location.href == 'https://www.youtube.com/' || document.location.href == 'https://m.youtube.com/') {
-			oldHref = ""; // clean old title
-			// change the mobile button visibility while on the main site
-			if (document.location.href == 'https://m.youtube.com/' && (document.getElementById('audioonlym'))) {
-				document.getElementById('audioonlym').style.display = "none";
-			}
-			// maybe check here for the mini player
-		}
-  });
-  observer.observe(body, { childList: true, subtree: true });
-});
-
 // if permissions are removed we politely remind the user
 browser.runtime.onMessage.addListener((message) => {
 	if (message.weneedpermissions) {
@@ -650,7 +602,7 @@ var asc;
 var vs;
 
 async function setUrl() {
-	//if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
+	//if (AUDIO_ONLY_ENABLED !== 1) { return }; // proceed only if audio only is enabled
  
   // wait for videoElement to be ready
 	while(!document.getElementById('movie_player')) { // patience
@@ -659,7 +611,7 @@ async function setUrl() {
 	
 	const videoElement = document.getElementsByTagName('video')[0];
 	if (videoElement.src.indexOf("blob:") >= 0) { // if the user has no autoplay enabled this will be null, fix later...
-		originalVideoSource = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
+		VIDEO_SOURCE = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
 	}
 	
 	as = {},  // audio streams
@@ -791,9 +743,9 @@ async function setUrl() {
 	
 	if ((audioURL) && (!cipherurl)) { // regular audio stream
 		console.log("TAO using regular audio only stream", audioURL);
-		recoveredAudioSource = audioURL; // making the audio source ready
-		//recoveredAudioSource = decodeURIComponent(audioURL); // making the audio source ready
-		if (isAudioEnabledfromStorage !== 1) { return }; // proceed only if audio only is enabled
+		AUDIO_SOURCE = audioURL; // making the audio source ready
+		//AUDIO_SOURCE = decodeURIComponent(audioURL); // making the audio source ready
+		//if (AUDIO_ONLY_ENABLED !== 1) { return }; // proceed only if audio only is enabled
 		playAudioOnly(); // play the audio source
 		//setTimeout(playAudioOnly, 3000); // I need to do better than this but for now it works tm
 		
@@ -841,7 +793,7 @@ async function setUrl() {
 		//let audioURLciphered = signatureurl + "&sp=" + decodedsig;
 		console.log("TAO audio-only ciphered url: ", audioURLciphered);
 		//console.log(decodeURIComponent(signatureurl));
-		recoveredAudioSource = audioURLciphered; // making the audio source ready
+		AUDIO_SOURCE = audioURLciphered; // making the audio source ready
 		playAudioOnly(); // play the audio source
 		// unless we fix the n parameter we have to do this check
 		fetch(audioURLciphered, { method: 'HEAD' }).then((response) => {
@@ -854,10 +806,39 @@ async function setUrl() {
 	}							
 }
 
+function countermeasures_desktop() { // desktop countermeasures
+	document.addEventListener("DOMContentLoaded", function() {
+		setInterval(() => window._lact = Date.now(), 600000); // bypass for "Are You Still There?" on Desktop
+		
+		const observer = new MutationObserver((mutations, observer) => { // for self-harm topic videos, may work for other errors too
+			const error_button = document.getElementById('player-error-message-container');
+			if (error_button) {
+				observer.disconnect();
+				console.log("TAO | Error-message button auto-clicked.");
+				document.getElementById('player-error-message-container').querySelector('button').click();
+				
+				// re-observe
+				setTimeout(function(){
+					observer.observe(document.body, {
+						childList: true,
+						subtree: true,
+					});
+				},10000);
+			}
+    });
+
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+		});
+		
+	});
+}
+
 // disable page-focus on mobile firefox to allow background play
 // original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
 // https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
-function backgroundPlayAndroid() {
+function countermeasures_android() {
 	// visibilitychange events are captured and stopped 
 	document.addEventListener("visibilitychange", function(e) {
 		e.stopImmediatePropagation();
@@ -880,12 +861,9 @@ function backgroundPlayAndroid() {
 		enumerable: true,
 		configurable: true
 	});
-}
-
-// attempts to bypass yt unwanted video pauses for mobile
-function disableAndroidAutoPause() {
+	
 	document.addEventListener('pause', function(e) {
-		console.log("TAO player is paused.");
+		console.log("TAO | Video player is paused.");
 		//let confirmdialog = document.getElementsByClassName('confirm-dialog-messages');
 		let videoPausedConfirmButton = document.getElementsByClassName('dialog-flex-button'); // "Video paused. Continue watching?"
 		let stillWatchingConfirmButton = document.getElementsByClassName('notification-action-response-text'); // "Still watching? Video will pause soon"
@@ -921,8 +899,8 @@ function disableAndroidAutoPause() {
 				}
 			}
 		}
-			
 	}, true);
+	
 }
 
 // our cloned version of the yt cipherSignature
