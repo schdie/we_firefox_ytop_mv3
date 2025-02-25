@@ -85,6 +85,7 @@ async function onVideoPlaybackStartup() {
 	let currentVideoPlayer = document.getElementById('movie_player').wrappedJSObject;
 	
 	document.addEventListener('playing', function(e) {
+		currentVideoPlayer = document.getElementById('movie_player').wrappedJSObject; // re-assign currentVideoPlayer to fix a mobile issue 
 		console.log("TAO | Video player started playback.");
 
 		console.log("TAO | CLIENT_VIDEO_ID old: ", CLIENT_VIDEO_ID);
@@ -120,14 +121,9 @@ async function postJSON() {
       method: "POST", // or 'PUT'
       credentials: 'include',
       mode: 'cors',
-      //credentials: 'include',
       headers: {
 				'Accept': 'application/json',
         'Content-Type': "application/json",
-        //'Access-Control-Allow-Origin': '*',
-        //'credentials': "same-origin",
-        //'Cookie': 'VISITOR_INFO1_LIVE=cgR-rSu9S5Q; VISITOR_PRIVACY_METADATA=CgJBUhIEGgAgGw%3D%3D; PREF=f6=40000000&tz=America.Argentina%2FTucuman&f5=30000&f7=140&f4=4010000&guide_collapsed=false&gl=US&repeat=NONE; __Secure-1PSIDTS=sidts-CjIBmiPuTcMwZBuORTJz9yl7RPcXvuqHrk1NE_sBAb1zymHTQ09QoNGrBLlqI4oerhsX8xAA; __Secure-3PSIDTS=sidts-CjIBmiPuTcMwZBuORTJz9yl7RPcXvuqHrk1NE_sBAb1zymHTQ09QoNGrBLlqI4oerhsX8xAA; HSID=AWR83uhWOW1mvLyHA; SSID=ABKyFIxZNiqZIRcUK; APISID=70GlldjQcNYussFL/ABAfFkB5dc4x9HkKC; SAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; __Secure-1PAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; __Secure-3PAPISID=x7nJoSQ82lhmBVJ6/AmkiNtjV7P5b87CUM; SID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F4yUiL3gRkOSNL8n7uZqgLggACgYKAdMSARISFQHGX2Miq3dEhE8R1eG3f8CIax727xoVAUF8yKpsU1YjkJsnx8TZFxpWxwN20076; __Secure-1PSID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F44j1pQWuro2IshtT8a4pN1wACgYKAUoSARISFQHGX2MiQ1l9pdkV5AgUVLeY4jHEMBoVAUF8yKrRD8XOclmvQ3vvR6h0Vwnq0076; __Secure-3PSID=g.a000sgiEYiN9foraF9mQAe4y1ftIDByyChIVylg74W1VXCU8P4F4liohlqFydwcV_qXf2vNSkQACgYKAaMSARISFQHGX2Mi5C3UZZX6tK2A_PRSBYQRwxoVAUF8yKrmqnzQ67g1pnCD032NhFhg0076; LOGIN_INFO=AFmmF2swRgIhAJjr96hHZCPyhLfVoelbWRSuwKRHW3GCkTGUe2CEC2MHAiEAuV8ZBh_F00NJsCFra8k_6pWjhO-kRIbvRk-qcxrUPJ0:QUQ3MjNmd1B2ZDB1RFozc0J4Rlp3S2QyM2wtZW1tSGI3UzJtNndsS0VJVjI3ZG16cnNfNnM1eEhXd0xYejNhdzhncXJ0UDFDWmc1ZWFQeEl5bnRMUWltcFZNOG4tUVJMMjJldXVhV042a0EwWjhkQ1ZWb01BZGhQbGZfaUVXbHhkY0NjLVhJUlJyT2F4dVhEMFRzcGdYWTBhWjhra2JfaEJ3; SIDCC=AKEyXzWJg0xizHOOGf_4dIelUJVZHzvCVGPr9rDcEAz76LbrqBPycB_oEXLzCFBnk8FdZDjF4MtH; __Secure-1PSIDCC=AKEyXzV3txAu-Rhjc4pknCJaKAK47Ou_ILBV0Y11EwTedl6olZUuSqeYG9qAxj0EaKcf8TMl7FA; __Secure-3PSIDCC=AKEyXzU923O6WP7dTBKmYT4XXA7coEwgmPZtkZGHUYRWqQEMZXRaBs4YjQj2gQWJsJb4Eo8q1J4; __Secure-ROLLOUT_TOKEN=CKSt3IyT_ZmZ9QEQzL743cq5igMYoI77yZiNiwM%3D; YSC=1OJGtaZleFM; wide=1',
-        //'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({ "context":
 							{ "client":
@@ -140,11 +136,6 @@ async function postJSON() {
                 'osVersion': '18.2.1.22C161',
                 'visitorData': VISITOR_DATA,
 								},
-								//"contentCheckOk": "True",
-								//"racyCheckOk": "True"
-								//"thirdParty": {
-								//	"embedUrl": "https://www.youtube.com"
-								//}
 							},
 							//"serviceIntegrityDimensions": {
 							//	"poToken": POTOKEN,
@@ -187,7 +178,6 @@ async function postJSONsansh() {
 				'Accept': 'application/json',
         'Content-Type': "application/json",
         'Access-Control-Allow-Origin': '*',
-        //'credentials': "same-origin",
       },
       body: JSON.stringify({ "context":
 							{ "client":
@@ -381,7 +371,7 @@ async function createAudioDiv() {
 			position:fixed;
 			width:5.5rem;
 			height:5.5rem;
-			bottom:3rem;
+			bottom:7.5rem;
 			left:1rem;
 			border-radius:50px;
 			text-align:center;
@@ -389,6 +379,7 @@ async function createAudioDiv() {
 			z-index: 9999;
 			opacity: 0.69;
 			border-color:blue;
+			display: none;
 			}`
 		));
 
@@ -414,6 +405,14 @@ async function createAudioDiv() {
 		
 		// prepend (we go old school here) the button to the body
 		document.body.prepend(mobileFloatButton);
+		
+		// set the button to visible if it's not on the main page
+		if (!location.href === "https://m.youtube.com/") {
+			document.getElementById('audioonlym').style.display = "block";
+		}
+		
+		// create an observer for URL changes and adjust the button visibility accordingly
+		mobileButtonVisibility();
 		
 		// add an event listener for touches on the created mobile button
 		monitorForClicksMobile();
@@ -518,6 +517,8 @@ async function monitorForClicksMobile() {
 		setTimeout(function(){
 			document.getElementById("audioonlym").disabled = false;
 		},1700);
+		
+		document.getElementById("audioonlym").style.display = "block"; // fix for the button dissapearing on click, this needs to be investigated
 		
 	});
 }
@@ -900,7 +901,29 @@ function countermeasures_android() {
 			}
 		}
 	}, true);
-	
+}
+
+function mobileButtonVisibility() { // mobile button visibility
+	let previousUrl = '';
+	let mobileButtonObserver = new MutationObserver(function (mutations) {
+		
+		if (location.href !== previousUrl) {
+			previousUrl = location.href;
+			//console.log(`TAO | URL changed to: ${location.href}`);
+			
+			if (location.href === "https://m.youtube.com/") {
+				document.getElementById('audioonlym').style.display = "none";
+				//console.log(`TAO | URL changed, setting audioonlym to display: none.`);
+			} else {
+				document.getElementById('audioonlym').style.display = "block"
+				//console.log(`TAO | URL changed, setting audioonlym to display: block.`);
+			}
+			
+		}
+	});
+
+	const config = {attributes: true, childList: true, subtree: true};
+	mobileButtonObserver.observe(document, config);
 }
 
 // our cloned version of the yt cipherSignature
