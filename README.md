@@ -4,16 +4,15 @@
 
 - Audio only playback:
 	- Works on Desktop and Mobile.
-	- Works with the regular video player and the miniplayer.
+	- Works with the regular video player and the mini-player.
 	- Save battery and bandwidth.
-	- On desktop it adds a toggle in the lower right corner of the video player to enable audio-only playback, allowing you to save battery by disabling the video rendering and bandwidth by downloading only the audio stream.
-	- On mobile it adds a semi-transparent floating button on the lower left part of the screen to enable audio-only playback, you can also "leave" the page and playback should continue normally.	
+	- On desktop use the toggle in the lower right corner of the video player to enable audio-only playback.
+	- On mobile use the semi-transparent floating button on the lower left part of the screen to enable audio-only playback, you can also "leave" the page and playback should continue normally.	
 	- Seamlessly switch between audio-only and video playback using the toggle on desktop or button on mobile.
-	- Since v37 the code has been refactored for performance.
 
 - Limitations:
 	- Doesn't work with live content.
-	- If autoplay is not enabled there may be some extrange behaviour.
+	- If autoplay is not enabled there may be some strange behavior.
 	- Depending on your network connection on some rare cases it may take a couple of seconds to get the audio-only stream, until it does it may render the video first but just for a brief moment.
 
 ### Install it directly from Mozilla [here](https://addons.mozilla.org/en-US/firefox/addon/tube-audio-options/).
