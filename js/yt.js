@@ -1,7 +1,4 @@
-//'use strict';
-
-// global scope, saved JSON response from video info request
-var jsonPlayerInfo;
+'use strict';
 
 // global scope, to avoid cors choose the correct API key
 var API_KEY;
@@ -21,8 +18,14 @@ var AUDIO_SOURCE;
 // global scope, visitor data
 var VISITOR_DATA; // should refresh on page/extension reload, needed once
 
+// global score, rolloutToken
+var ROLLOUTTOKEN; 
+
 // global scope, poToKen
 var POTOKEN;
+
+// global scope, saved JSON response from video info request
+var jsonPlayerInfo;
 
 // global scope, used to check if we already got the base.js file
 var wasBasedotjsRetrieved;
@@ -149,18 +152,20 @@ async function postJSON() {
     console.log("TAO | jsonPlayerInfo response retrieved successfully.");
     if (jsonPlayerInfo.streamingData) {
 			console.log("TAO | jsonPlayerInfo response has streams.");
-			//console.log("TAO | jsonPlayerInfo response has streams.", jsonPlayerInfo);
 			//console.log("TAO | jsonPlayerInfo response has streams.", jsonPlayerInfo.videoDetails.videoId);
 			setUrl(); // once everything is retrieved we do our logic
 		} else {
 			if ((!VISITOR_DATA) && (jsonPlayerInfo.responseContext.visitorData)) {
 				VISITOR_DATA = jsonPlayerInfo.responseContext.visitorData;
+				//ROLLOUTTOKEN = jsonPlayerInfo.responseContext.rolloutToken;
 				console.log("TAO | Retrying request with visitorData if available.");
 				postJSON(); // retry with visitorData
 			} else {
 				postJSONsansh(); // trying to see if we can get the streams with the s&sh bypass
 			}
+			//console.log("TAO | jsonPlayerInfo response has no streams but may have visitorData full: ", jsonPlayerInfo);
 			console.log("TAO | jsonPlayerInfo response has no streams but may have visitorData: ", jsonPlayerInfo.responseContext.visitorData);
+			console.log("TAO | jsonPlayerInfo response has no streams but may have a rolloutToken: ", jsonPlayerInfo.responseContext.rolloutToken);
 		}
   } catch (error) {
     console.error("TAO | jsonPlayerInfo response Error:", error);
@@ -240,6 +245,7 @@ async function playAudioOnly() {
 	if (AUDIO_ONLY_ENABLED !== 1) { return }; // only change to audio only if the toggle is enabled
 
 	const videoElement = document.getElementsByClassName('video-stream')[0];
+	/*
 	let cTime = videoElement.currentTime; // save the current video player time
 	
 	// brute-forcing our way
@@ -268,7 +274,7 @@ async function playAudioOnly() {
 			},2000);
 		}
 	}
-
+	*/
 	let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
 
 	if (playPromise !== undefined) {
@@ -278,13 +284,14 @@ async function playAudioOnly() {
 			if (videoElement.src.indexOf("blob:") >= 0) { VIDEO_SOURCE = videoElement.src; } // needed when: there's no autoplay, video started without audio-only, the user switched to video again
 			
 			videoElement.src = AUDIO_SOURCE;		
-			//setCurrentTime();
-			playVideo();
+			setCurrentTime();
+			videoElement.play();
+			//playVideo();
 			console.log("TAO | playAudioOnly playPromise started with no errors", videoElement.src);
 		})
 		.catch(error => {
 			console.log("TAO | playAudioOnly playPromise did not start, error: ", error);
-			
+			/*
 			// fix when autoplay is not enabled and audio only was requested before the video ever played
 			if (videoElement.src.indexOf("blob:") >= 0) {
 				videoElement.src = AUDIO_SOURCE;
@@ -295,7 +302,23 @@ async function playAudioOnly() {
 			
 			return;
 			//return playAudioOnly();
+			*/
 		});
+	}
+}
+
+// get the current time of the player to allow for a seamless switch
+function setCurrentTime() {
+	if (!document.location.href.includes('m.youtube.com/watch?')) {
+		// find the video element
+		const videoElement = document.getElementsByTagName('video')[0];
+		// save the current player time
+		let currentTime = document.getElementsByClassName("ytp-time-current")[0];
+		// convert the time into seconds
+		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
+		// set the current time for the video element
+		videoElement.currentTime = currentTimeSeconds;
+		//videoElement.setAttribute("currentTime", currentTimeSeconds);
 	}
 }
 
@@ -598,10 +621,6 @@ browser.runtime.onMessage.addListener((message) => {
 });
 
 // thanks to https://stackoverflow.com/questions/8690255/how-to-play-only-the-audio-of-a-youtube-video-using-html-5/45375023#45375023 for the idea
-var as;
-var asc;
-var vs;
-
 async function setUrl() {
 	//if (AUDIO_ONLY_ENABLED !== 1) { return }; // proceed only if audio only is enabled
  
@@ -615,11 +634,17 @@ async function setUrl() {
 		VIDEO_SOURCE = videoElement.src;	console.log("TAO original video element src: ", videoElement.src); // save the original video+audio source
 	}
 	
-	as = {},  // audio streams
-	asc = {}, // ciphered audio streams 
-	vs = {},  // video streams
+	let as;
+	let asc;
+	let vs;
+	let streams;
+	let result;	
+	
+	as = {};  // audio streams
+	asc = {}; // ciphered audio streams 
+	vs = {}; // video streams
 
-	streams = [],
+	streams = [];
 	result = {};
 				
 	// creating the streams from our data
@@ -812,11 +837,26 @@ function countermeasures_desktop() { // desktop countermeasures
 		setInterval(() => window._lact = Date.now(), 600000); // bypass for "Are You Still There?" on Desktop
 		
 		const observer = new MutationObserver((mutations, observer) => { // for self-harm topic videos, may work for other errors too
-			const error_button = document.getElementById('player-error-message-container');
-			if (error_button) {
+			const sht_button = document.getElementById('player-error-message-container');
+			if (sht_button) {
 				observer.disconnect();
 				console.log("TAO | Error-message button auto-clicked.");
 				document.getElementById('player-error-message-container').querySelector('button').click();
+				
+				// re-observe
+				setTimeout(function(){
+					observer.observe(document.body, {
+						childList: true,
+						subtree: true,
+					});
+				},10000);
+			}
+			
+			const continueWatching_button = document.getElementById('confirm-button'); // for are you still there? pop-up
+			if (continueWatching_button) {
+				observer.disconnect();
+				console.log("TAO | Confirm-button auto-clicked.");
+				document.getElementById('confirm-button').click();
 				
 				// re-observe
 				setTimeout(function(){
@@ -832,7 +872,7 @@ function countermeasures_desktop() { // desktop countermeasures
 			childList: true,
 			subtree: true,
 		});
-		
+
 	});
 }
 
