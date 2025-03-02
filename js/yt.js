@@ -833,6 +833,29 @@ async function setUrl() {
 }
 
 function countermeasures_desktop() { // desktop countermeasures
+	// visibilitychange events are captured and stopped 
+	document.addEventListener("visibilitychange", function(e) {
+		e.stopImmediatePropagation();
+	}, true);
+
+	// document.visibilityState always returns false
+	Object.defineProperty(Document.prototype, "hidden", {
+		get: function hidden() {
+			return false;
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	// document.visibilityState always returns "visible"
+	Object.defineProperty(Document.prototype, "visibilityState", {
+		get: function visibilityState() {
+			return "visible";
+		},
+		enumerable: true,
+		configurable: true
+	});
+	
 	document.addEventListener("DOMContentLoaded", function() {
 		setInterval(() => window._lact = Date.now(), 600000); // bypass for "Are You Still There?" on Desktop
 		
