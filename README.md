@@ -1,5 +1,5 @@
 ## Tube Audio Options+
-### A firefox extension using manifest v3.
+### A Firefox extension using manifest v3.
 **This extension adds the following functionality to youtube.com and m.youtube.com:**
 
 - Audio only playback:
