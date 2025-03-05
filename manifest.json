@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "name": "Tube Audio Options+",
   "homepage_url": "https://github.com/schdie/we_firefox_ytop_mv3",
-  "version": "41",
+  "version": "42",
   
   "icons": {
     "48": "icons/48.png",
@@ -12,7 +12,7 @@
   },
   
   "permissions": [
-    "storage", "webRequest"
+    "storage"
   ],
   
   "host_permissions": [
