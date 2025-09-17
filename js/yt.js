@@ -242,7 +242,7 @@ async function storDisableAudioOnly() {
 // function to play only audio
 async function playAudioOnly() {
 	console.log("TAO | playAudioOnly called: " + AUDIO_SOURCE);
-	if (AUDIO_ONLY_ENABLED !== 1) { return }; // only change to audio only if the toggle is enabled
+	if (AUDIO_ONLY_ENABLED !== 1) { return }; // only change to audio if the toggle is enabled
 
 	const videoElement = document.getElementsByClassName('video-stream')[0];
 	/*
@@ -310,14 +310,10 @@ async function playAudioOnly() {
 // get the current time of the player to allow for a seamless switch
 function setCurrentTime() {
 	if (!document.location.href.includes('m.youtube.com/watch?')) {
-		// find the video element
-		const videoElement = document.getElementsByTagName('video')[0];
-		// save the current player time
-		let currentTime = document.getElementsByClassName("ytp-time-current")[0];
-		// convert the time into seconds
-		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time));
-		// set the current time for the video element
-		videoElement.currentTime = currentTimeSeconds;
+		const videoElement = document.getElementsByTagName('video')[0]; // find the video element
+		let currentTime = document.getElementsByClassName("ytp-time-current")[0]; // save the current player time
+		let currentTimeSeconds = +(currentTime.innerText.split(':').reduce((acc,time) => (60 * acc) + +time)); // convert the time into seconds
+		videoElement.currentTime = currentTimeSeconds; // set the current time for the video element
 		//videoElement.setAttribute("currentTime", currentTimeSeconds);
 	}
 }
@@ -354,7 +350,7 @@ async function createAudioDiv() {
 	// ytp-right-controls only exists on desktop
 	if (document.getElementsByClassName('ytp-right-controls')[0]) {
 		// once ytp-right-controls can be safely found
-		let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls')[0];
+		let ytpRightControlsElement = document.getElementsByClassName('ytp-right-controls-left')[0];
 		
 		// we create the new div to append right before ytp-right-controls
 		let audiotdiv = document.createElement("div");
@@ -366,9 +362,9 @@ async function createAudioDiv() {
 
 		// check the initial state our div should have
 		if (AUDIO_ONLY_ENABLED === 1) {
-			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="true" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="0 0 45 45" width="100%" fill-opacity="0.9"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#C92E2E"></path></svg></button>';
 		} else {
-			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="-10.5 -11 45 45" width="100%" fill-opacity="1"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#fff"></path></svg></button>';
+			audiotdiv.innerHTML = '<button id="audioonly" class="ytp-audioonly-button ytp-button" data-priority="3" data-title-no-tooltip="Audio-only Toggle" aria-pressed="false" aria-label="Audio-only Toggle" title="Audio-only Toggle"><svg class="ytp-subtitles-button-icon" height="100%" version="1.1" viewBox="0 0 45 45" width="100%" fill-opacity="0.7"><use class="ytp-svg-shadow" xlink:href="#ytp-id-ao17"></use><path d="M20 12v-1.707c0-4.442-3.479-8.161-7.755-8.29-2.204-.051-4.251.736-5.816 2.256A7.933 7.933 0 0 0 4 10v2c-1.103 0-2 .897-2 2v4c0 1.103.897 2 2 2h2V10a5.95 5.95 0 0 1 1.821-4.306 5.977 5.977 0 0 1 4.363-1.691C15.392 4.099 18 6.921 18 10.293V20h2c1.103 0 2-.897 2-2v-4c0-1.103-.897-2-2-2z" fill="#717171"></path></svg></button>';
 		}
 
 		// get the parent node
