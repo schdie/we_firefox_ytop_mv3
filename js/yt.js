@@ -300,14 +300,21 @@ function setCurrentTime() {
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
 	console.log("TAO playVideoWithAudio called: " + VIDEO_SOURCE);
-	//const videoElement = document.getElementsByTagName('video')[0];
-	console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
 	
 	setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
 	
 	setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
 	
-	setTimeout(() => { 	const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();  }, 500);
+	//setTimeout(() => { 	document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();  }, 500);
+
+	setTimeout(() => {
+		if (document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].ariaChecked == "true") {
+			const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[1].click();
+		} else {
+			const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();
+		}
+	}, 500);
+
 }
 
 
@@ -321,7 +328,7 @@ async function createAudioDiv() {
 	
 	// if we already exist there's no need for more of us
 	if (document.getElementById('audioonly') || document.getElementById('audioonlym')) {
-		console.log("TAO audioonly or audioonlym divs already exist, bailing.");
+		console.log("TAO | audioonly or audioonlym divs already exist, bailing.");
 		// in case the mobile button is already loaded but not visible
 		if (document.getElementById('audioonlym')) {
 			document.getElementById('audioonlym').style.display = "block";
@@ -472,25 +479,18 @@ async function monitorForClicks() {
 	
 	// monitor the YT video quality buttons
 	document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
-		console.log("TAO VIDEO RESOLUTION CLICK!");
-		// we only care if the audioonly div is enabled (faster than checking storage)
-		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
-			// this is a hack, but when clicking on any child element in ytp-menuitem-label...
-			let elT = document.getElementsByClassName('ytp-menuitem-label')[0].innerText;
-			// ...that contains any of the following text values
-			if (elT.includes("2160p") || elT.includes("1440p") || elT.includes("1080p") || elT.includes("720p") || elT.includes("480p") || elT.includes("360p") || elT.includes("240p") || elT.includes("144p")) {
-				// set the audioonly div button to disabled
-				document.getElementById('audioonly').setAttribute("aria-pressed", "false");
-				// set audioonly storage to false
-				storDisableAudioOnly();
-				// set AUDIO_ONLY_ENABLED var
-				AUDIO_ONLY_ENABLED = 0;
-				// request to play video+audio
-				//document.querySelectorAll('.ytp-menuitem')[0].click();
-				//playVideoWithAudio();
-			}
-		}
-	});
+		console.log("TAO | Settings/Quality click detected");
+		//this.removeEventListener('click', ytSetButList);
+		document.getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].addEventListener("click", function (e) {
+			console.log("TAO | new resolution selected click detected");
+			// set the audioonly div button to disabled
+			document.getElementById('audioonly').setAttribute("aria-pressed", "false");
+			// set audioonly storage to false
+			storDisableAudioOnly();
+			// set AUDIO_ONLY_ENABLED var
+			AUDIO_ONLY_ENABLED = 0;
+		});
+	}, { once: true } );
 }
 
 // monitoring for touches on our mobile button
