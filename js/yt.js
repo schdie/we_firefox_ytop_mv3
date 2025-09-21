@@ -1,5 +1,8 @@
 'use strict';
 
+// set to true by default
+var DESKTOP = true;
+
 // global scope, to avoid cors choose the correct API key
 var API_KEY;
 
@@ -68,6 +71,7 @@ function runningDevice() {
 	if (navigator.userAgent.includes('Mobile')) {
 		console.log("TAO | Running on mobile device, setting API_KEY and countermeasures.")
 		API_KEY = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		DESKTOP = false;
 		countermeasures_android();
 	} else {
 		console.log("TAO | Running on desktop, setting API_KEY and countermeasures.")
@@ -126,7 +130,7 @@ async function postJSON() {
       mode: 'cors',
       headers: {
 				'Accept': 'application/json',
-        'Content-Type': "application/json",
+				'Content-Type': "application/json",
       },
       body: JSON.stringify({ "context":
 							{ "client":
@@ -301,20 +305,24 @@ function setCurrentTime() {
 function playVideoWithAudio() {
 	console.log("TAO playVideoWithAudio called: " + VIDEO_SOURCE);
 	
-	setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
-	
-	setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
-	
-	//setTimeout(() => { 	document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();  }, 500);
-
-	setTimeout(() => {
-		if (document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].ariaChecked == "true") {
-			const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[1].click();
-		} else {
-			const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();
+	if (DESKTOP == "true") {
+		setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
+		setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
+		setTimeout(() => {
+			if (document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].ariaChecked == "true") {
+				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[1].click();
+			} else {
+				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();
+			}
+		}, 500);
+	} else { // for mobile
+		const videoElement = document.getElementsByTagName('video')[0];
+		console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
+		videoElement.src = VIDEO_SOURCE;
+		videoElement.fastSeek(videoElement.currentTime,true); // set current time
+		//setCurrentTime();
+		videoElement.play();
 		}
-	}, 500);
-
 }
 
 
