@@ -1,7 +1,7 @@
 'use strict';
 
 // set to true by default
-var DESKTOP = true;
+var DESKTOP;
 
 // global scope, to avoid cors choose the correct API key
 var API_KEY;
@@ -71,11 +71,12 @@ function runningDevice() {
 	if (navigator.userAgent.includes('Mobile')) {
 		console.log("TAO | Running on mobile device, setting API_KEY and countermeasures.")
 		API_KEY = "https://m.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		DESKTOP = false;
+		DESKTOP = 0;
 		countermeasures_android();
 	} else {
 		console.log("TAO | Running on desktop, setting API_KEY and countermeasures.")
 		API_KEY = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		DESKTOP = 1;
 		countermeasures_desktop();
 	}
 }
@@ -303,9 +304,10 @@ function setCurrentTime() {
 
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
-	console.log("TAO playVideoWithAudio called: " + VIDEO_SOURCE);
-	
-	if (DESKTOP == "true") {
+	const videoElement = document.getElementsByTagName('video')[0];
+	if (DESKTOP === 1) {
+		console.log("TAO playVideoWithAudio called from desktop: " + VIDEO_SOURCE);
+		//videoElement.pause();
 		setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
 		setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
 		setTimeout(() => {
@@ -316,7 +318,7 @@ function playVideoWithAudio() {
 			}
 		}, 500);
 	} else { // for mobile
-		const videoElement = document.getElementsByTagName('video')[0];
+		console.log("TAO playVideoWithAudio called from mobile: " + VIDEO_SOURCE);
 		console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
 		videoElement.src = VIDEO_SOURCE;
 		videoElement.fastSeek(videoElement.currentTime,true); // set current time
@@ -324,7 +326,6 @@ function playVideoWithAudio() {
 		videoElement.play();
 		}
 }
-
 
 // function to create our audioonly div
 async function createAudioDiv() {
