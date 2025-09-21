@@ -149,7 +149,7 @@ async function postJSON() {
     });
 
     jsonPlayerInfo = await response.json();
-    console.log("TAO | jsonPlayerInfo response retrieved successfully.");
+    console.log("TAO | postJSON() jsonPlayerInfo response retrieved successfully.", jsonPlayerInfo);
     if (jsonPlayerInfo.streamingData) {
 			console.log("TAO | jsonPlayerInfo response has streams.");
 			//console.log("TAO | jsonPlayerInfo response has streams.", jsonPlayerInfo.videoDetails.videoId);
@@ -244,37 +244,8 @@ async function playAudioOnly() {
 	console.log("TAO | playAudioOnly called: " + AUDIO_SOURCE);
 	if (AUDIO_ONLY_ENABLED !== 1) { return }; // only change to audio if the toggle is enabled
 
-	const videoElement = document.getElementsByClassName('video-stream')[0];
-	/*
-	let cTime = videoElement.currentTime; // save the current video player time
+	let videoElement = document.getElementsByClassName('video-stream')[0];
 	
-	// brute-forcing our way
-	async function playVideo() {
-		
-	if (navigator.getAutoplayPolicy("mediaelement") === "allowed") { // checking autoplay
-		console.log('TAO | Autoplay is allowed.');
-		// Create and play a new media element.
-		} else if (navigator.getAutoplayPolicy("mediaelement") === "allowed-muted") {
-			console.log('TAO | Autoplay is allowed while muted.');
-			// Create a new media element, and play it in muted.
-		} else {
-			// Autoplay is disallowed, maybe show a poster instead.
-			console.log('TAO | Autoplay is NOT allowed!');
-		}
-		
-		try {
-			await videoElement.play();
-			videoElement.fastSeek(cTime,true);
-			console.log("TAO | playAudioOnly current time: ", cTime);
-		} catch (err) {
-			console.log("err ", err);
-
-			setTimeout(function(){ // fixes the high cpu usage when autoplay is disabled
-				videoElement.fastSeek(0,true);
-			},2000);
-		}
-	}
-	*/
 	let playPromise = videoElement.play(); //https://developer.chrome.com/blog/play-request-was-interrupted#danger-zone
 
 	if (playPromise !== undefined) {
@@ -283,9 +254,17 @@ async function playAudioOnly() {
 			
 			if (videoElement.src.indexOf("blob:") >= 0) { VIDEO_SOURCE = videoElement.src; } // needed when: there's no autoplay, video started without audio-only, the user switched to video again
 			
-			videoElement.src = AUDIO_SOURCE;		
-			setCurrentTime();
-			videoElement.play();
+			videoElement.pause();
+			console.log("TAO | playAudioOnly video paused.");
+				
+			setTimeout(() => { videoElement.src = AUDIO_SOURCE; console.log("TAO | playAudioOnly video source changed with 0.5 seconds pause"); }, 500);
+			
+			setTimeout(() => { setCurrentTime(); console.log("TAO | playAudioOnly set current time changed with 1 second pause"); }, 1000);
+			
+			
+			setTimeout(() => { videoElement.play(); console.log("TAO | playAudioOnly video resumed playback."); }, 1500);
+			
+			//videoElement.play();
 			//playVideo();
 			console.log("TAO | playAudioOnly playPromise started with no errors", videoElement.src);
 		})
@@ -321,13 +300,16 @@ function setCurrentTime() {
 // function to play the original stream with video+audio
 function playVideoWithAudio() {
 	console.log("TAO playVideoWithAudio called: " + VIDEO_SOURCE);
-	const videoElement = document.getElementsByTagName('video')[0];
+	//const videoElement = document.getElementsByTagName('video')[0];
 	console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
-	videoElement.src = VIDEO_SOURCE;
-	videoElement.fastSeek(videoElement.currentTime,true); // set current time
-	//setCurrentTime();
-	videoElement.play();
+	
+	setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
+	
+	setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
+	
+	setTimeout(() => { 	const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();  }, 500);
 }
+
 
 // function to create our audioonly div
 async function createAudioDiv() {
@@ -490,6 +472,7 @@ async function monitorForClicks() {
 	
 	// monitor the YT video quality buttons
 	document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
+		console.log("TAO VIDEO RESOLUTION CLICK!");
 		// we only care if the audioonly div is enabled (faster than checking storage)
 		if (document.getElementById('audioonly').getAttribute("aria-pressed") == "true") {
 			// this is a hack, but when clicking on any child element in ytp-menuitem-label...
@@ -503,7 +486,8 @@ async function monitorForClicks() {
 				// set AUDIO_ONLY_ENABLED var
 				AUDIO_ONLY_ENABLED = 0;
 				// request to play video+audio
-				playVideoWithAudio();
+				//document.querySelectorAll('.ytp-menuitem')[0].click();
+				//playVideoWithAudio();
 			}
 		}
 	});
@@ -691,7 +675,7 @@ async function setUrl() {
 				
 	// video+audio only streams array
 	var videoStreams = streams.filter(function (el) {
-		return el.mimeType.includes(',');
+		return el.mimeType.includes('video');
 	});
 
 	//console.log(videoStreams); // array with the available video streams
