@@ -135,13 +135,13 @@ async function postJSON() {
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ 'clientName': 'IOS',
-                'clientVersion': '20.03.02',
-                'deviceMake': 'Apple',
-                'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
-                'osName': 'iPhone',
-                'osVersion': '18.2.1.22C161',
+								{ 'clientName': 'ANDROID',
+                'clientVersion': '20.10.38',
+                //'deviceMake': 'Apple',
+                //'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
+                'osName': 'Android',
+                'osVersion': '11',
                 'visitorData': VISITOR_DATA,
 								},
 							},
@@ -149,7 +149,7 @@ async function postJSON() {
 							//	"poToken": POTOKEN,
 							//},
 							//"racyCheckOk": "true",
-              //"contentCheckOk": "true",
+							//"contentCheckOk": "true",
 							"videoId": CLIENT_VIDEO_ID}),			
     });
 
@@ -191,13 +191,13 @@ async function postJSONsansh() {
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ 'clientName': 'IOS',
-                'clientVersion': '20.03.02',
-                'deviceMake': 'Apple',
-                'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)',
-                'osName': 'iPhone',
-                'osVersion': '18.2.1.22C161',
+								{ 'clientName': 'ANDROID',
+                'clientVersion': '20.10.38',
+                //'deviceMake': 'Apple',
+                //'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
+                'osName': 'Android',
+                'osVersion': '11',
                 'visitorData': VISITOR_DATA,
 								}
 							},
@@ -208,7 +208,7 @@ async function postJSONsansh() {
 									"embedUrl": "https://www.youtube.com"
 							},
 							"racyCheckOk": true,
-              "contentCheckOk": true,
+							"contentCheckOk": true,
 							//"playbackContext": {
 							//	"contentPlaybackContext": {
 							//		"signatureTimestamp": "19997"
@@ -306,17 +306,13 @@ function setCurrentTime() {
 function playVideoWithAudio() {
 	const videoElement = document.getElementsByTagName('video')[0];
 	if (DESKTOP === 1) {
-		console.log("TAO playVideoWithAudio called from desktop: " + VIDEO_SOURCE);
-		//videoElement.pause();
-		setTimeout(() => { 	document.getElementsByClassName("ytp-settings-button")[0].click(); }, 100);
-		setTimeout(() => { 	const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem"); const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click(); }, 300);
-		setTimeout(() => {
-			if (document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].ariaChecked == "true") {
-				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[1].click();
-			} else {
-				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();
-			}
-		}, 500);
+		videoElement.pause();
+		console.log("TAO playVideoWithAudio called from Desktop: " + VIDEO_SOURCE);
+		console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
+		videoElement.src = VIDEO_SOURCE;
+		videoElement.fastSeek(videoElement.currentTime,true); // set current time
+		//setCurrentTime();
+		videoElement.play();
 	} else { // for mobile
 		console.log("TAO playVideoWithAudio called from mobile: " + VIDEO_SOURCE);
 		console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
