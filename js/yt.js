@@ -3,6 +3,9 @@
 // set to true by default
 var DESKTOP;
 
+// clone the current cookie to make the requests valid
+//var YTCOOKIE; disabled for now
+
 // global scope, to avoid cors choose the correct API key
 var API_KEY;
 
@@ -62,6 +65,10 @@ async function getStoredValues() {
 		AUDIO_ONLY_ENABLED = 0;
 		console.log("TAO | Startup: audioonly is disabled.");
 	}
+	
+	// saved cookie
+	//const {yt_cookie_clone} = await browser.storage.local.get('yt_cookie_clone');
+	//YTCOOKIE = yt_cookie_clone;
 }
 
 getStoredValues(); // this should be one of the first things to execute
@@ -132,16 +139,20 @@ async function postJSON() {
       headers: {
 				'Accept': 'application/json',
 				'Content-Type': "application/json",
+				//'Cookie': YTCOOKIE,
+				  // YouTube requires this for AJAX/POST requests to prevent CSRF
+				  'X-Origin': 'https://www.youtube.com' 
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ 'clientName': 'ANDROID',
-                'clientVersion': '20.10.38',
-                //'deviceMake': 'Apple',
-                //'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
+								{ 'clientName': 'ANDROID_VR',
+                'clientVersion': '1.71.26',
+                'deviceMake': 'Oculus',
+                'deviceModel': 'Quest 3',
+                'androidSdkVersion': 32,
+                'userAgent': 'com.google.android.apps.youtube.vr.oculus/1.71.26 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip',
                 'osName': 'Android',
-                'osVersion': '11',
+                'osVersion': '12L',
                 'visitorData': VISITOR_DATA,
 								},
 							},
@@ -918,26 +929,37 @@ function countermeasures_desktop() { // desktop countermeasures
 // original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
 // https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
 function countermeasures_android() {
-	// visibilitychange events are captured and stopped 
-	document.addEventListener("visibilitychange", function(e) {
+	// block visibility and focus-related events
+	const blockEvents = (e) => {
 		e.stopImmediatePropagation();
-	}, true);
+	};
 
-	// document.visibilityState always returns false
-	Object.defineProperty(Document.prototype, "hidden", {
-		get: function hidden() {
-			return false;
-		},
-		enumerable: true,
-		configurable: true
+	// capture events
+	document.addEventListener("visibilitychange", blockEvents, true);
+	window.addEventListener("blur", blockEvents, true);
+	window.addEventListener("mouseleave", blockEvents, true);
+
+	// override property getters on document and window
+	const props = {
+		visibilityState: "visible",
+		hidden: false
+	};
+
+	Object.entries(props).forEach(([key, value]) => {
+		Object.defineProperty(Document.prototype, key, {
+			get: () => value,
+			configurable: true
+		});
 	});
 
-	// document.visibilityState always returns "visible"
-	Object.defineProperty(Document.prototype, "visibilityState", {
-		get: function visibilityState() {
-			return "visible";
-		},
-		enumerable: true,
+	// fake the window focus
+	Object.defineProperty(window, "onblur", {
+		set: () => {},
+		get: () => null
+	});
+
+	Object.defineProperty(document, "hasFocus", {
+		value: () => true,
 		configurable: true
 	});
 	

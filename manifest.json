@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "name": "Tube Audio Options+",
   "homepage_url": "https://github.com/schdie/we_firefox_ytop_mv3",
-  "version": "46",
+  "version": "47",
   
   "icons": {
     "48": "icons/48.png",
@@ -12,11 +12,11 @@
   },
   
   "permissions": [
-    "storage"
+    "storage", "cookies"
   ],
   
   "host_permissions": [
-		"*://*.youtube.com/*", "*://*.googlevideo.com/*"
+    "*://*.youtube.com/*", "*://*.googlevideo.com/*"
 	],
 	
 	"web_accessible_resources": [
@@ -27,25 +27,25 @@
   ],
   
   "background": {
-		"scripts": ["js/service.js"]
+    "scripts": ["js/service.js"]
   },
 
   "content_scripts": [
   {
-		"all_frames": true,
+	"all_frames": true,
     "matches": ["*://*.youtube.com/*" ],
     "js": ["js/yt.js"],
     "run_at": "document_start"
-    }
+  }
   ],
   
   "browser_specific_settings": {
     "gecko": {
-			"id": "{0cc0b5b4-e2a6-410d-832e-00db8654e077}",
+      "id": "{0cc0b5b4-e2a6-410d-832e-00db8654e077}",
       "strict_min_version": "120.0"
     },
     "gecko_android": {
-			"strict_min_version": "120.0"
-		}
+      "strict_min_version": "120.0"
+    }
   }
 }

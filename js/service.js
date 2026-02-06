@@ -26,7 +26,7 @@ var reqPermWait = 0;
 async function reqPerm() {
 	let challengeAllPerms = {
 		origins: ["*://*.youtube.com/*", "*://*.googlevideo.com/*"],
-		permissions: ["storage", "webRequest"],
+		permissions: ["storage", "webRequest", "cookies"],
 	};
 	
 	let challengeOriginsPerms = {
@@ -34,7 +34,7 @@ async function reqPerm() {
 	};
 	
 	let challengeBasicPerms = {
-		permissions: ["storage", "webRequest"],
+		permissions: ["storage", "webRequest", "cookies"],
 	};
 	
 	const allperms = await browser.permissions.contains(challengeAllPerms);
@@ -52,12 +52,13 @@ async function reqPerm() {
 			// alert the content script to let the user know we need the permissions to work properly
 			//console.log("Sending message to content script: we need permissions.");
 			
-			const tabs = await chrome.tabs.query({});
+			const tabs = await browser.tabs.query({});
 
 			for (const tab of tabs) {
 				if (!tab.id) return;
 				//console.log("tab.id: " + tab.id);
-				browser.tabs.sendMessage(tab.id, {weneedpermissions: "we really need them"});
+				browser.tabs.sendMessage(tab.id, {weneedpermissions: "we really need them"})
+				  .catch(err => console.warn("Content script not ready yet, skipping."));
 			}
 
 			// we wait a little in case the user changes more than one permission in close sucession
@@ -79,3 +80,26 @@ async function setDefaultValues() {
 		await browser.storage.local.set({audioonly: 0});
 	}
 }
+
+//
+async function getYouTubeCookies() {
+  try {
+    const cookies = await browser.cookies.getAll({ domain: "youtube.com" });
+    // show the cookies!
+    console.log(cookies);
+    // get THE cookie
+    const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+    console.log(cookieString);
+    // save the cookie
+    const {yt_cookie_clone} = await browser.storage.local.get('yt_cookie_clone');
+	
+	if (!yt_cookie_clone) {
+		await browser.storage.local.set({yt_cookie_clone: yt_cookie_clone});
+	}
+  } catch (error) {
+    console.error("Error fetching cookies:", error);
+  }
+}
+
+// get the cookies to make the requests (disabled for now...)
+//getYouTubeCookies();
