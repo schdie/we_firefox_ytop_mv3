@@ -925,44 +925,38 @@ function countermeasures_desktop() { // desktop countermeasures
 	});
 }
 
-// disable page-focus on mobile firefox to allow background play
-// original code by Frank Dreßler https://addons.mozilla.org/firefox/addon/disable-page-visibility/
-// https://github.com/gwarser @ https://gist.githubusercontent.com/gwarser/3b47b61863bffcfebe4498c77b2301cd/raw/disable-pageview-api.js
+
+
+// for new yt UI
 function countermeasures_android() {
+	// fighting fire with fire
+	function injectBackgroundFix() {
+	  if ('mediaSession' in navigator) {
+		// intercept the pause in media session
+		navigator.mediaSession.setActionHandler('pause', () => {
+		  console.log("YouTube Fix: Blocked system pause.");
+		  // nothing to do here, just let the video play
+		});
+	  }
+
+	  // visibility is always visible
+	  Object.defineProperties(document, {
+		'visibilityState': { value: 'visible', configurable: true },
+		'hidden': { value: false, configurable: true }
+	  });
+	}
+
+	// injecting directly into the page context
+	const script = document.createElement('script');
+	script.textContent = `(${injectBackgroundFix.toString()})();`;
+	(document.head || document.documentElement).appendChild(script);
+	script.remove();
+	
 	// block visibility and focus-related events
 	const blockEvents = (e) => {
 		e.stopImmediatePropagation();
 	};
 
-	// capture events
-	document.addEventListener("visibilitychange", blockEvents, true);
-	window.addEventListener("blur", blockEvents, true);
-	window.addEventListener("mouseleave", blockEvents, true);
-
-	// override property getters on document and window
-	const props = {
-		visibilityState: "visible",
-		hidden: false
-	};
-
-	Object.entries(props).forEach(([key, value]) => {
-		Object.defineProperty(Document.prototype, key, {
-			get: () => value,
-			configurable: true
-		});
-	});
-
-	// fake the window focus
-	Object.defineProperty(window, "onblur", {
-		set: () => {},
-		get: () => null
-	});
-
-	Object.defineProperty(document, "hasFocus", {
-		value: () => true,
-		configurable: true
-	});
-	
 	document.addEventListener('pause', function(e) {
 		console.log("TAO | Video player is paused.");
 		//let confirmdialog = document.getElementsByClassName('confirm-dialog-messages');
