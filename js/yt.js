@@ -322,22 +322,22 @@ function playVideoWithAudio() {
 		
 		videoElement.pause();
 		
-		document.getElementsByClassName("ytp-settings-button")[0].click();
-		
-		//setTimeout(() => {
-		//	document.getElementsByClassName("ytp-settings-button")[0].click();
-		//}, 100);
+		document.getElementsByClassName("ytp-settings-button")[0].click(); // settings click
 		
 		setTimeout(() => {
-			const elementsWithClass = document.getElementById("ytp-id-7").getElementsByClassName("ytp-menuitem");
-			const lastElement = elementsWithClass[elementsWithClass.length - 1]; lastElement.click();
+			const elementQuality = document.getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem");
+			// clicks on the last element from settings (usually quality)
+			const elementQualityClick = elementQuality[elementQuality.length - 1].click(); // quality click
 		}, 200);
 		
 		setTimeout(() => {
-			if (document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].ariaChecked == "true") {
-				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[1].click();
+			const elementQualityList = document.getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem"); // popup menu
+			
+			if (elementQualityList[elementQualityList.length - 1].ariaChecked == "true") { // auto quality is selected
+				
+				const elementQualityClick = elementQualityList[elementQualityList.length - 2].click(); // lowest possible quality click (just above auto)
 			} else {
-				const elementsListQuality = document.getElementById("ytp-id-7").getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].click();
+				const elementQualityClick = elementQualityList[elementQualityList.length - 1].click(); // auto quality click
 			}
 		}, 400);
 		
@@ -346,6 +346,7 @@ function playVideoWithAudio() {
 		}, 600);
 		
 		//videoElement.src = VIDEO_SOURCE;
+		//videoElement.load();
 		//videoElement.fastSeek(videoElement.currentTime,true); // set current time
 		//setCurrentTime();
 		//videoElement.play();
@@ -519,10 +520,10 @@ async function monitorForClicks() {
 	}
 	
 	// monitor the YT video quality buttons
-	document.getElementsByClassName('ytp-popup ytp-settings-menu')[0].addEventListener("click", function (e) {
+	document.getElementsByClassName('ytp-settings-menu')[0].addEventListener("click", function (e) {
 		console.log("TAO | Settings/Quality click detected");
 		//this.removeEventListener('click', ytSetButList);
-		document.getElementsByClassName("ytp-quality-menu")[0].getElementsByClassName("ytp-panel-menu")[0].addEventListener("click", function (e) {
+		document.getElementsByClassName("ytp-panel-menu")[0].getElementsByClassName("ytp-menuitem")[0].addEventListener("click", function (e) {
 			console.log("TAO | new resolution selected click detected");
 			// set the audioonly div button to disabled
 			document.getElementById('audioonly').setAttribute("aria-pressed", "false");
@@ -925,16 +926,14 @@ function countermeasures_desktop() { // desktop countermeasures
 	});
 }
 
-
-
-// for new yt UI
+// for the new yt UI
 function countermeasures_android() {
 	// fighting fire with fire
 	function injectBackgroundFix() {
 	  if ('mediaSession' in navigator) {
 		// intercept the pause in media session
 		navigator.mediaSession.setActionHandler('pause', () => {
-		  console.log("YouTube Fix: Blocked system pause.");
+		  console.log("TAO | mediaSession pause detected.");
 		  // nothing to do here, just let the video play
 		});
 	  }
