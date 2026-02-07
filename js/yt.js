@@ -353,10 +353,19 @@ function playVideoWithAudio() {
 	} else { // for mobile
 		console.log("TAO playVideoWithAudio called from mobile: " + VIDEO_SOURCE);
 		console.log("TAO playVideoWithAudio current time: ", videoElement.currentTime);
+		
+		/* placeholder for mobile, currently hardcoded (even worse than desktop...)
+		document.getElementsByClassName("icon-button player-settings-icon")[0].click(); // settings click
+		document.getElementsByClassName("yt-list-item-view-model")[1].click(); // quality click
+		document.getElementsByClassName("yt-list-item-view-model")[0].click(); // resolution click
+		*/
+		
+		/*
 		videoElement.src = VIDEO_SOURCE;
 		videoElement.fastSeek(videoElement.currentTime,true); // set current time
 		//setCurrentTime();
 		videoElement.play();
+		*/
 	}
 }
 
