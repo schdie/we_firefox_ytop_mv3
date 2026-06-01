@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "name": "Tube Audio Options+",
   "homepage_url": "https://github.com/schdie/we_firefox_ytop_mv3",
-  "version": "49",
+  "version": "51",
   
   "icons": {
     "48": "icons/48.png",
@@ -42,10 +42,14 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "{0cc0b5b4-e2a6-410d-832e-00db8654e077}",
-      "strict_min_version": "120.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+			"required": ["none"]
+		}
     },
     "gecko_android": {
-      "strict_min_version": "120.0"
+      "strict_min_version": "142.0"
     }
   }
+  
 }
