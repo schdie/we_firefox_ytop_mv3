@@ -479,6 +479,15 @@ async function createAudioDiv() {
 	}
 }
 
+// in case the button goes missing createAudioDiv() is called again
+document.addEventListener("DOMContentLoaded", function() {
+    createAudioDiv();
+});
+
+document.addEventListener("yt-navigate-finish", function() {
+    createAudioDiv();
+});
+
 // monitoring for clicks on our div and the video quality menu of YT
 async function monitorForClicks() {
 	// audio only button path
