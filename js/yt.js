@@ -474,7 +474,7 @@ async function createAudioDiv() {
 		document.body.prepend(mobileFloatButton);
 		
 		// set the button to visible if it's not on the main page
-		if (!location.href === "https://m.youtube.com/") {
+		if (location.href !== "https://m.youtube.com/") {
 			document.getElementById('audioonlym').style.display = "block";
 		}
 		
@@ -599,9 +599,9 @@ async function monitorForClicksMobile() {
 }
 
 // on document load only, mostly executed only once since yt is a dynamic website
-document.addEventListener("DOMContentLoaded", function() {
-	createAudioDiv(); // always create our div after the DOM is done
-});
+//document.addEventListener("DOMContentLoaded", function() {
+//	createAudioDiv(); // always create our div after the DOM is done
+//});
 
 // find the current base.js in use
 async function getbasejs() {
