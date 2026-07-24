@@ -81,6 +81,7 @@ async function setDefaultValues() {
 	}
 }
 
+/*
 //
 async function getYouTubeCookies() {
   try {
@@ -100,6 +101,7 @@ async function getYouTubeCookies() {
     console.error("Error fetching cookies:", error);
   }
 }
+*/
 
 // get the cookies to make the requests (disabled for now...)
 //getYouTubeCookies();

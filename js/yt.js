@@ -28,7 +28,7 @@ var VISITOR_DATA; // should refresh on page/extension reload, needed once
 var ROLLOUTTOKEN; 
 
 // global scope, poToKen
-var POTOKEN;
+var POTOKEN = "IggXkReQffO08g==";
 
 // global scope, saved JSON response from video info request
 var jsonPlayerInfo;
@@ -202,24 +202,25 @@ async function postJSONsansh() {
       },
       body: JSON.stringify({ "context":
 							{ "client":
-								{ 'clientName': 'ANDROID',
-                'clientVersion': '20.10.38',
-                //'deviceMake': 'Apple',
-                //'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip',
-                'osName': 'Android',
-                'osVersion': '11',
+								{ 'clientName': 'IOS',
+                'clientVersion': '21.02.3',
+                'deviceMake': 'Apple',
+                'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.ios.youtube/21.02.3 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
+                'osName': 'iPhone',
+                'osVersion': '18.3.2.22D82',
                 'visitorData': VISITOR_DATA,
 								}
 							},
-							//"serviceIntegrityDimensions": {
-							//	"poToken": POTOKEN,
-							//},
-							"thirdParty": {
-									"embedUrl": "https://www.youtube.com"
+							"serviceIntegrityDimensions": {
+								"poToken": POTOKEN,
 							},
-							"racyCheckOk": true,
-							"contentCheckOk": true,
+							"attestationRequest": { omitBotguardData: true },
+							//"thirdParty": {
+							//		"embedUrl": "https://www.youtube.com"
+							//},
+							//"racyCheckOk": true,
+							//"contentCheckOk": true,
 							//"playbackContext": {
 							//	"contentPlaybackContext": {
 							//		"signatureTimestamp": "19997"
@@ -1058,3 +1059,4 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
+
