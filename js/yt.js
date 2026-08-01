@@ -493,10 +493,6 @@ async function createAudioDiv() {
 
 		document.body.prepend(loopFloatButton);
 
-		if (location.href !== "https://m.youtube.com/") {
-				document.getElementById('loopm').style.display = "block";
-		}
-
 		// check the initial state our button should have
 		if (AUDIO_ONLY_ENABLED === 1) {
 			mobileFloatButton.style.background = "#F24033";
@@ -514,6 +510,7 @@ async function createAudioDiv() {
 		// set the button to visible if it's not on the main page
 		if (location.href !== "https://m.youtube.com/") {
 			document.getElementById('audioonlym').style.display = "block";
+			document.getElementById('loopm').style.display = "block";
 		}
 		
 		// create an observer for URL changes and adjust the button visibility accordingly
@@ -1093,14 +1090,13 @@ function mobileButtonVisibility() { // mobile button visibility
 		
 		if (location.href !== previousUrl) {
 			previousUrl = location.href;
-			//console.log(`TAO | URL changed to: ${location.href}`);
 			
 			if (location.href === "https://m.youtube.com/") {
 				document.getElementById('audioonlym').style.display = "none";
-				//console.log(`TAO | URL changed, setting audioonlym to display: none.`);
+				document.getElementById('loopm').style.display = "none";
 			} else {
 				document.getElementById('audioonlym').style.display = "block"
-				//console.log(`TAO | URL changed, setting audioonlym to display: block.`);
+				document.getElementById('loopm').style.display = "block";
 			}
 			
 		}
