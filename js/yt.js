@@ -24,11 +24,14 @@ var AUDIO_SOURCE;
 // global scope, visitor data
 var VISITOR_DATA; // should refresh on page/extension reload, needed once
 
-// global score, rolloutToken
+// global scope, rolloutToken
 var ROLLOUTTOKEN; 
 
 // global scope, poToKen
-var POTOKEN = "IggXkReQffO08g==";
+var POTOKEN;
+
+// global scope, loop status
+var LOOP_ENABLED = false;
 
 // global scope, saved JSON response from video info request
 var jsonPlayerInfo;
@@ -450,15 +453,49 @@ async function createAudioDiv() {
 			display: none;
 			}`
 		));
+		
+		// new style for the loop button
+		const loopStyle = document.createElement('style');
+		loopStyle.appendChild(document.createTextNode(`
+				.float-loop{
+				position:fixed;
+				width:3.00rem;
+				height:3.00rem;
+				bottom:8.875rem;
+				left:7.25rem;
+				border-radius:50px;
+				text-align:center;
+				box-shadow: 0.5rem 0.5rem 0.8rem #000;
+				z-index: 9999;
+				opacity: 0.69;
+				border-color:blue;
+				display: none;
+				}`
+		));
 
-		// append the style to the head
+		// append the styles to the head
 		const head = document.getElementsByTagName('head')[0];
 		head.appendChild(style);
+		head.appendChild(loopStyle);
 			
 		// create our floaty button
 		const mobileFloatButton = document.createElement("button");
 		mobileFloatButton.setAttribute("id", "audioonlym");
 		mobileFloatButton.setAttribute("class", "float");
+		
+		// create our floaty loop button
+		const loopFloatButton = document.createElement("button");
+		loopFloatButton.setAttribute("id", "loopm");
+		loopFloatButton.setAttribute("class", "float-loop");
+		loopFloatButton.style.background = "#DDDDDD";
+		loopFloatButton.setAttribute("aria-pressed", "false");
+		loopFloatButton.innerHTML = '<svg height="100%" version="1.1" viewBox="0.4 0.5 24 24" width="100%" fill-opacity="1"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 13c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 8.94A7.93 7.93 0 0 0 4 13c0 4.42 3.58 8 8 8v4l5-5-5-5v4z" fill="#797979"></path></svg>';
+
+		document.body.prepend(loopFloatButton);
+
+		if (location.href !== "https://m.youtube.com/") {
+				document.getElementById('loopm').style.display = "block";
+		}
 
 		// check the initial state our button should have
 		if (AUDIO_ONLY_ENABLED === 1) {
@@ -484,6 +521,9 @@ async function createAudioDiv() {
 		
 		// add an event listener for touches on the created mobile button
 		monitorForClicksMobile();
+		
+		// the loop button listener
+		monitorForClicksLoopMobile();
 	}
 }
 
@@ -559,6 +599,31 @@ async function monitorForClicks() {
 			AUDIO_ONLY_ENABLED = 0;
 		});
 	}, { once: true } );
+}
+
+// monitoring for touches on the loop mobile button
+async function monitorForClicksLoopMobile() {
+	document.getElementById('loopm').addEventListener('click', () => {
+	//loopFloatButton.addEventListener('click', () => {
+		//let currentVideoPlayer = document.getElementById('movie_player').wrappedJSObject;
+    const video = document.querySelector('video');
+    if (!video) return;
+		//if (!currentVideoPlayer) return;
+
+    LOOP_ENABLED = !LOOP_ENABLED;
+    video.loop = LOOP_ENABLED;
+    //currentVideoPlayer.loop = LOOP_ENABLED;
+
+    if (LOOP_ENABLED) {
+        document.getElementById('loopm').style.background = "#F24033";
+        document.getElementById('loopm').setAttribute("aria-pressed", "true");
+        document.getElementById('loopm').innerHTML = '<svg height="100%" version="1.1" viewBox="0.4 0.5 24 24" width="100%" fill-opacity="1"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 13c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 8.94A7.93 7.93 0 0 0 4 13c0 4.42 3.58 8 8 8v4l5-5-5-5v4z" fill="#fff"></path></svg>';
+    } else {
+        document.getElementById('loopm').style.background = "#DDDDDD";
+        document.getElementById('loopm').setAttribute("aria-pressed", "false");
+        document.getElementById('loopm').innerHTML = '<svg height="100%" version="1.1" viewBox="0.4 0.5 24 24" width="100%" fill-opacity="1"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 13c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 8.94A7.93 7.93 0 0 0 4 13c0 4.42 3.58 8 8 8v4l5-5-5-5v4z" fill="#797979"></path></svg>';
+    }
+	});
 }
 
 // monitoring for touches on our mobile button
@@ -1059,4 +1124,6 @@ var cipherTools = {
         a[b % a.length] = c
     }
 };
+
+
 
