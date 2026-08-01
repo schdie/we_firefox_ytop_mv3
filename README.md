@@ -17,7 +17,7 @@
 
 ### Install it directly from Mozilla [here](https://addons.mozilla.org/en-US/firefox/addon/tube-audio-options/).
 
-### For the Chrome version install it directly from the Chrome store [here](https://chrome.google.com/webstore/devconsole/f17cb3fc-5c8b-40bd-914f-9729143bd556).
+### For the Chrome version install it directly from the Chrome store [here](https://chromewebstore.google.com/detail/tube-audio-options+/nncagcdobheiaepocmngkbbilajgcblk).
 
 ---
 
